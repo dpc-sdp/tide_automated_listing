@@ -1,0 +1,28 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - core.entity_view_mode.paragraph.preview
+    - field.field.paragraph.automated_card_listing.field_paragraph_auto_listing
+    - field.field.paragraph.automated_card_listing.field_paragraph_cta
+    - field.field.paragraph.automated_card_listing.field_paragraph_cta_text
+    - field.field.paragraph.automated_card_listing.field_paragraph_title
+    - paragraphs.paragraphs_type.automated_card_listing
+id: paragraph.automated_card_listing.preview
+targetEntityType: paragraph
+bundle: automated_card_listing
+mode: preview
+content:
+  field_paragraph_title:
+    weight: 0
+    label: inline
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    type: string
+    region: content
+hidden:
+  field_paragraph_auto_listing: true
+  field_paragraph_cta: true
+  field_paragraph_cta_text: true
+  search_api_excerpt: true

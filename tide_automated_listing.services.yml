@@ -1,0 +1,4 @@
+services:
+  tide_automated_listing.sapi_index_helper:
+    class: Drupal\tide_automated_listing\SearchApiIndexHelper
+    arguments: [ '@entity_type.manager', '@entity_type.bundle.info', '@string_translation', '@search_api.fields_helper' ]

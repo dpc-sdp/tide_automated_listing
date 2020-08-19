@@ -1,0 +1,53 @@
+<?php
+
+/**
+ * @file
+ * Tide Automated Listing component.
+ */
+
+use Drupal\Core\Serialization\Yaml;
+
+/**
+ * Change the structure of filters to support individual operator.
+ */
+function tide_automated_listing_update_8002() {
+  $paragraphs = \Drupal::entityQuery('paragraph')
+    ->condition('type', 'automated_card_listing')
+    ->exists('field_paragraph_auto_listing')
+    ->execute();
+
+  if ($paragraphs) {
+    foreach ($paragraphs as $revision_id => $id) {
+      /** @var \Drupal\paragraphs\ParagraphInterface $paragraph */
+      $paragraph = \Drupal::entityTypeManager()->getStorage('paragraph')->load($id);
+      if ($paragraph) {
+        $value = $paragraph->get('field_paragraph_auto_listing')->getString();
+        if ($value) {
+          try {
+            $configuration = Yaml::decode($value);
+            if (isset($configuration['filters']) && is_array($configuration['filters'])) {
+              $data_changed = FALSE;
+              foreach ($configuration['filters'] as $filter_id => $filter) {
+                if (!isset($filter['values'])) {
+                  $configuration['filters'][$filter_id] = [
+                    'values' => $filter,
+                    'operator' => 'OR',
+                  ];
+                  $data_changed = TRUE;
+                }
+              }
+              if ($data_changed) {
+                $paragraph->set('field_paragraph_auto_listing', Yaml::encode($configuration));
+                $paragraph->setNewRevision(FALSE);
+                $paragraph->save();
+              }
+            }
+          }
+          catch (\Exception $exception) {
+            watchdog_exception('tide_automated_listing', $exception);
+          }
+        }
+      }
+    }
+  }
+}

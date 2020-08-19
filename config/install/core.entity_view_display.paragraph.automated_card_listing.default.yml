@@ -1,0 +1,54 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.paragraph.automated_card_listing.field_paragraph_auto_listing
+    - field.field.paragraph.automated_card_listing.field_paragraph_cta
+    - field.field.paragraph.automated_card_listing.field_paragraph_cta_text
+    - field.field.paragraph.automated_card_listing.field_paragraph_title
+    - paragraphs.paragraphs_type.automated_card_listing
+  module:
+    - link
+    - tide_automated_listing
+id: paragraph.automated_card_listing.default
+targetEntityType: paragraph
+bundle: automated_card_listing
+mode: default
+content:
+  field_paragraph_auto_listing:
+    weight: 1
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    type: automated_listing_configuration
+    region: content
+  field_paragraph_cta:
+    type: link
+    weight: 3
+    region: content
+    label: above
+    settings:
+      trim_length: 80
+      url_only: false
+      url_plain: false
+      rel: ''
+      target: ''
+    third_party_settings: {  }
+  field_paragraph_cta_text:
+    type: string
+    weight: 2
+    region: content
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+  field_paragraph_title:
+    weight: 0
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    type: string
+    region: content
+hidden:
+  search_api_excerpt: true

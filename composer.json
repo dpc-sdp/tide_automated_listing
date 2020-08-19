@@ -1,0 +1,24 @@
+{
+  "name": "dpc-sdp/tide_automated_listing",
+  "description": "Provides automated listing component for Tide Drupal 8 distribution",
+  "type": "drupal-module",
+  "license": "GPL-2.0+",
+  "version": "0.0.1",
+  "require": {
+    "dpc-sdp/tide_core": "@dev",
+    "dpc-sdp/tide_api": "@dev",
+    "dpc-sdp/tide_landing_page": "@dev",
+    "dpc-sdp/tide_search": "@dev"
+  },
+  "suggest": {
+    "dpc-sdp/tide_site:@dev": "Tide Site"
+  },
+  "repositories": {
+    "drupal": {
+      "type": "composer",
+      "url": "https://packages.drupal.org/8"
+    }
+  },
+  "minimum-stability": "alpha",
+  "prefer-stable": true
+}
