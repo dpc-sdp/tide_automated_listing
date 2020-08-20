@@ -48,8 +48,10 @@ class AutomatedListingConfigurationProcessed extends TypedData {
     if (!isset($text) || empty($text) || trim($text) === '') {
       $this->configuration = [];
     }
+    else {
+      $this->configuration = Yaml::decode($text);
+    }
 
-    $this->configuration = Yaml::decode($text);
     return $this->configuration;
   }
 

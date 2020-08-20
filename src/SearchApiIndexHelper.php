@@ -4,6 +4,7 @@ namespace Drupal\tide_automated_listing;
 
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Field\TypedData\FieldItemDataDefinitionInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\elasticsearch_connector\ElasticSearch\Parameters\Factory\IndexFactory;
@@ -498,9 +499,12 @@ class SearchApiIndexHelper {
       }
       try {
         $definition = $this->sapiFieldsHelper->retrieveNestedProperty($index->getPropertyDefinitions('entity:node'), $field->getPropertyPath());
+        if (!($definition instanceof FieldItemDataDefinitionInterface)) {
+          continue;
+        }
         /** @var \Drupal\field\FieldConfigInterface $field_config */
         $field_config = $definition->getFieldDefinition();
-        if (!in_array($field_config->getType(), ['entity_reference', 'entity_reference_revisions'])) {
+        if (!static::isEntityReferenceField($field_config->getType())) {
           continue;
         }
         $settings = $definition->getSettings();
@@ -522,6 +526,24 @@ class SearchApiIndexHelper {
     }
 
     return static::excludeArrayKey($reference_fields, $excludes);
+  }
+
+  /**
+   * Check if a field type is entity reference.
+   *
+   * @param string $field_type
+   *   The field type.
+   * @return bool
+   *   TRUE if the field is entity reference.
+   */
+  protected static function isEntityReferenceField($field_type) {
+    $entity_reference_types = [
+      'entity_reference',
+      'entity_reference_revisions',
+      'entity_hierarchy',
+    ];
+
+    return in_array($field_type, $entity_reference_types);
   }
 
   /**

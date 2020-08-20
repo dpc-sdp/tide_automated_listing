@@ -155,6 +155,7 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
     }
 
     $configuration = $items[$delta]->configuration ?? [];
+    $configuration = $this->getDefaultConfiguration($configuration);
 
     $element['tabs'] = [
       '#type' => 'horizontal_tabs',
@@ -695,6 +696,32 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
       $name .= '[' . $path . ']';
     }
     return $name;
+  }
+
+  /**
+   * Get the default configuration.
+   *
+   * @param array $configuration
+   *   The configuration.
+   *
+   * @return array
+   *   The configuration.
+   */
+  protected function getDefaultConfiguration($configuration) {
+    $configuration['results']['min'] = $configuration['results']['min'] ?? 0;
+    $configuration['results']['max'] = $configuration['results']['max'] ?? 0;
+    $configuration['results']['min_not_met'] = $configuration['results']['min_not_met'] ?? 'hide';
+    $configuration['results']['no_results_message'] = $configuration['results']['no_results_message'] ?? '';
+
+    $configuration['display']['type'] = $configuration['display']['type'] ?? 'carousel';
+    $configuration['display']['items_per_page'] = $configuration['display']['items_per_page'] ?? 0;
+
+    $configuration['filter_operator'] = $configuration['filter_operator'] ?? 'AND';
+    $configuration['filters'] = $configuration['filters'] ?? [];
+
+    $configuration['sort'] = $configuration['sort'] ?? [];
+
+    return $configuration;
   }
 
 }
