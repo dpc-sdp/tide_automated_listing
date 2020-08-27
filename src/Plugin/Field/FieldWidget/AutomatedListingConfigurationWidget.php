@@ -2,6 +2,7 @@
 
 namespace Drupal\tide_automated_listing\Plugin\Field\FieldWidget;
 
+use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FieldItemListInterface;
@@ -166,7 +167,6 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
     $this->buildResultsSettingsTab($items, $delta, $element, $form, $form_state, $configuration);
     $this->buildDisplaySettingsTab($items, $delta, $element, $form, $form_state, $configuration);
     $this->buildFilterSettingsTab($items, $delta, $element, $form, $form_state, $configuration);
-    $this->buildSortSettingsTab($items, $delta, $element, $form, $form_state, $configuration);
 
     return $element;
   }
@@ -190,13 +190,13 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
   protected function buildDisplaySettingsTab(FieldItemListInterface $items, $delta, array &$element, array &$form, FormStateInterface $form_state, array $configuration = NULL) {
     $element['tabs']['display'] = [
       '#type' => 'details',
-      '#title' => $this->t('Display settings'),
+      '#title' => $this->t('Display options'),
       '#open' => TRUE,
       '#collapsible' => TRUE,
       '#group_name' => 'display',
     ];
     $element['tabs']['display']['type'] = [
-      '#type' => 'select',
+      '#type' => 'radios',
       '#title' => $this->t('Display as'),
       '#options' => [
         'carousel' => $this->t('Carousel'),
@@ -204,9 +204,46 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
       ],
       '#default_value' => $configuration['display']['type'] ?? 'carousel',
     ];
+
+    $element['tabs']['display']['min'] = [
+      '#type' => 'number',
+      '#title' => $this->t('Minimum results to show'),
+      '#default_value' => $configuration['display']['min'] ?? 1,
+      '#min' => 0,
+    ];
+
+    $element['tabs']['display']['max'] = [
+      '#type' => 'number',
+      '#title' => $this->t('Maximum results to show'),
+      '#default_value' => $configuration['display']['max'] ?? 0,
+      '#min' => 0,
+      '#description' => $this->t('Enter \'0\' for no maximum limit')
+    ];
+
+    $element['tabs']['display']['min_not_met'] = [
+      '#type' => 'radios',
+      '#title' => $this->t('If minimum count is not met'),
+      '#options' => [
+        'hide' => $this->t('Hide component'),
+        'no_results_message' => $this->t("Show 'no results' message"),
+      ],
+      '#default_value' => $configuration['display']['min_not_met'] ?? 'hide',
+    ];
+
+    $element['tabs']['display']['no_results_message'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t("'No results' message"),
+      '#default_value' => $configuration['display']['no_results_message'] ?? $this->t('There are currently no results'),
+      '#states' => [
+        'invisible' => [
+          ':input[name="' . $this->getFormStatesElementName('tabs|display|min_not_met', $items, $delta, $element) . '"]' => ['value' => 'hide'],
+        ],
+      ],
+    ];
+
     $element['tabs']['display']['items_per_page'] = [
       '#type' => 'number',
-      '#title' => $this->t('Items per page'),
+      '#title' => $this->t('Cards shown per page'),
       '#default_value' => $configuration['display']['items_per_page'] ?? 0,
       '#min' => 0,
       '#description' => $this->t('If 0 is entered here, all items will show on the same page without pagination. Otherwise pagination will apply once the entered number is exceeded.'),
@@ -216,6 +253,36 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
         ],
       ],
     ];
+
+    $default_sort_by = '';
+    $date_fields = $this->indexHelper->getIndexDateFields($this->index);
+    if (!empty($configuration['display']['field']) && !empty($date_fields[$configuration['display']['field']])) {
+      $default_sort_by = $configuration['display']['field'];
+    }
+    $element['tabs']['display']['field'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Sort by'),
+      '#default_value' => $default_sort_by,
+      '#options' => ['' => $this->t('- No sort -')] + $date_fields,
+    ];
+    $element['tabs']['display']['direction'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Sort order'),
+      '#default_value' => $configuration['display']['direction'] ?? 'desc',
+      '#options' => [
+        'asc' => $this->t('Ascending'),
+        'desc' => $this->t('Descending'),
+      ],
+    ];
+
+    if ($this->indexHelper->isNodeStickyIndexedAsInteger($this->index)) {
+      $element['tabs']['display']['with_sticky'] = [
+        '#type' => 'checkbox',
+        '#title' => $this->t("Consider 'Sticky at top of lists' option"),
+        '#default_value' => $configuration['display']['with_sticky'] ?? FALSE,
+        '#description' => $this->t('If this option is selected, all other sorting criteria will be secondary to the stickied content.'),
+      ];
+    }
 
     $date_fields = $this->indexHelper->getIndexDateFields($this->index);
     $default_card_date = '';
@@ -262,44 +329,115 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
   protected function buildResultsSettingsTab(FieldItemListInterface $items, $delta, array &$element, array &$form, FormStateInterface $form_state, array $configuration = NULL) {
     $element['tabs']['results'] = [
       '#type' => 'details',
-      '#title' => $this->t('Result settings'),
+      '#title' => $this->t('Listing results'),
       '#open' => TRUE,
       '#collapsible' => TRUE,
       '#tree' => TRUE,
       '#group_name' => 'results',
     ];
-    $element['tabs']['results']['min'] = [
-      '#type' => 'number',
-      '#title' => $this->t('Minimum results to show'),
-      '#default_value' => $configuration['results']['min'] ?? 0,
-      '#min' => 0,
-    ];
-    $element['tabs']['results']['max'] = [
-      '#type' => 'number',
-      '#title' => $this->t('Maximum results to show'),
-      '#default_value' => $configuration['results']['max'] ?? 0,
-      '#min' => 0,
-    ];
 
-    $element['tabs']['results']['min_not_met'] = [
-      '#type' => 'radios',
-      '#title' => $this->t('If minimum count is not met'),
-      '#options' => [
-        'hide' => $this->t('Hide component'),
-        'no_results_message' => $this->t("Show 'no results' message"),
-      ],
-      '#default_value' => $configuration['results']['min_not_met'] ?? 'hide',
-    ];
-    $element['tabs']['results']['no_results_message'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t("'No results' message"),
-      '#default_value' => $configuration['results']['no_results_message'] ?? $this->t('There are currently no results'),
-      '#states' => [
-        'invisible' => [
-          ':input[name="' . $this->getFormStatesElementName('tabs|results|min_not_met', $items, $delta, $element) . '"]' => ['value' => 'hide'],
-        ],
-      ],
-    ];
+    // Content type filter.
+    if ($this->indexHelper->isNodeTypeIndexed($this->index)) {
+      $contentTypes = $this->indexHelper->getNodeTypes();
+
+      $element['tabs']['results']['type_wrapper'] = [
+        '#type' => 'details',
+        '#title' => $this->t('Content type'),
+        '#open' => TRUE,
+        '#collapsible' => TRUE,
+        '#group_name' => 'result_type_wrapper',
+      ];
+      $element['tabs']['results']['type_wrapper']['type'] = [
+        '#type' => 'select',
+        '#title' => $this->t('Select Content types'),
+        '#options' => $contentTypes,
+        '#default_value' => $configuration['results']['type']['values'] ?? [],
+      ];
+      if (isset($configuration['results']['type']['values']) && empty($configuration['results']['type']['values'])) {
+        $element['tabs']['results']['type_wrapper']['#open'] = FALSE;
+      }
+
+      // Todo: As we have single content type selection now, remove the concept of or and and for content types
+//    $element['tabs']['results']['operator'] = $this->buildFilterOperatorSelect($configuration['filter_operator'] ?? 'AND', $this->t('This operator is used to combined the filters together.'));
+
+      $entity_reference_fields = $this->getEntityReferenceFields();
+
+      // Allow other modules to remove entity reference filters.
+      $excludes = $this->moduleHandler->invokeAll('tide_automated_listing_entity_reference_fields_exclude', [
+        $this->index,
+        $entity_reference_fields,
+        clone $items,
+        $delta,
+      ]);
+
+      if (!empty($excludes) && is_array($excludes)) {
+        $entity_reference_fields = $this->indexHelper::excludeArrayKey($entity_reference_fields, $excludes);
+      }
+
+      if (!empty($entity_reference_fields)) {
+        foreach ($entity_reference_fields as $field_id => $field_label) {
+          $default_values = $configuration['results'][$field_id]['values'] ?? [];
+          $field_filter = $this->indexHelper->buildEntityReferenceFieldFilter($this->index, $field_id, $default_values);
+          if ($field_filter && ($field_id === 'field_topic' || $field_id === 'field_tags')) {
+            $element['tabs']['results'][$field_id . '_wrapper'] = [
+              '#type' => 'details',
+              '#title' => $field_label,
+              '#open' => FALSE,
+              '#collapsible' => TRUE,
+              '#group_name' => 'results_' . $field_id . '_wrapper',
+            ];
+            $element['tabs']['results'][$field_id . '_wrapper'][$field_id] = $field_filter;
+            $element['tabs']['results'][$field_id . '_wrapper']['operator'] = $this->buildFilterOperatorSelect($configuration['filters'][$field_id]['operator'] ?? 'OR', $this->t('This filter operator is used to combined all the selected values together.'));
+            if (isset($configuration['filters'][$field_id])) {
+              $element['tabs']['results'][$field_id . '_wrapper']['#open'] = TRUE;
+            }
+
+            $element['tabs']['results'][$field_id . '_wrapper']['#title'] = ($field_id == 'field_topic') ? $this->t('Topic') : $this->t('Tags');
+            $element['tabs']['results'][$field_id . '_wrapper'][$field_id]['#title'] = ($field_id == 'field_topic') ? $this->t('Select topics') : $this->t('Select tags');
+            if (isset($configuration['results'][$field_id]['values']) && empty($configuration['filters'][$field_id]['values'])) {
+              $element['tabs']['results'][$field_id . '_wrapper']['#open'] = FALSE;
+            }
+            else {
+              $element['tabs']['results'][$field_id . '_wrapper']['#open'] = TRUE;
+            }
+
+            $element['tabs']['results'][$field_id . '_wrapper']['#states'] = [
+              'invisible' => [
+                ':input[name="' . $this->getFormStatesElementName('tabs|results|type', $items, $delta, $element) . '"]' => ['value' => 'hide'],
+              ],
+            ];
+          }
+        }
+
+        $element['tabs']['results']['advanced_taxonomy_wrapper'] = [
+          '#type' => 'details',
+          '#title' => $this->t('Advanced Taxonomies'),
+          '#open' => TRUE,
+          '#collapsible' => TRUE,
+          '#group_name' => 'result_advanced_taxonomy_wrapper',
+          '#attributes' => ['id' => 'advanced-taxonomy-wrapper'],
+        ];
+
+        foreach ($entity_reference_fields as $field_id => $field_label) {
+          $default_values = $configuration['filters'][$field_id]['values'] ?? [];
+          $field_filter = $this->indexHelper->buildEntityReferenceFieldFilter($this->index, $field_id, $default_values);
+          if ($field_filter && ($field_id !== 'field_topic' && $field_id !== 'field_tags')) {
+            $element['tabs']['results']['advanced_taxonomy_wrapper'][$field_id . '_wrapper'] = [
+              '#type' => 'details',
+              '#title' => $field_label,
+              '#open' => FALSE,
+              '#collapsible' => TRUE,
+              '#group_name' => 'results_' . $field_id . '_wrapper',
+            ];
+            $element['tabs']['results']['advanced_taxonomy_wrapper'][$field_id . '_wrapper'][$field_id] = $field_filter;
+            $element['tabs']['results']['advanced_taxonomy_wrapper'][$field_id . '_wrapper']['operator'] = $this->buildFilterOperatorSelect($configuration['filters'][$field_id]['operator'] ?? 'OR', $this->t('This filter operator is used to combined all the selected values together.'));
+            if (isset($configuration['filters']['advanced_taxonomy_wrapper'][$field_id])) {
+              $element['tabs']['results']['advanced_taxonomy_wrapper'][$field_id . '_wrapper']['#open'] = TRUE;
+            }
+          }
+        }
+      }
+    }
   }
 
   /**
@@ -321,78 +459,11 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
   protected function buildFilterSettingsTab(FieldItemListInterface $items, $delta, array &$element, array &$form, FormStateInterface $form_state, array $configuration = NULL) {
     $element['tabs']['filters'] = [
       '#type' => 'details',
-      '#title' => $this->t('Filter criteria'),
+      '#title' => $this->t('Filters'),
       '#open' => TRUE,
       '#collapsible' => TRUE,
       '#group_name' => 'filters',
     ];
-    $element['tabs']['filters']['operator'] = $this->buildFilterOperatorSelect($configuration['filter_operator'] ?? 'AND', $this->t('This operator is used to combined the filters together.'));
-
-    // Content type filter.
-    if ($this->indexHelper->isNodeTypeIndexed($this->index)) {
-      $element['tabs']['filters']['type_wrapper'] = [
-        '#type' => 'details',
-        '#title' => $this->t('Content type'),
-        '#open' => TRUE,
-        '#collapsible' => TRUE,
-        '#group_name' => 'filters_type_wrapper',
-      ];
-      $element['tabs']['filters']['type_wrapper']['type'] = [
-        '#type' => 'checkboxes',
-        '#title' => $this->t('Select Content types'),
-        '#options' => $this->indexHelper->getNodeTypes(),
-        '#default_value' => $configuration['filters']['type']['values'] ?? [],
-      ];
-      if (isset($configuration['filters']['type']['values']) && empty($configuration['filters']['type']['values'])) {
-        $element['tabs']['filters']['type_wrapper']['#open'] = FALSE;
-      }
-    }
-
-    // Generate all entity reference filters.
-    $entity_reference_fields = $this->getEntityReferenceFields();
-    // Allow other modules to remove entity reference filters.
-    $excludes = $this->moduleHandler->invokeAll('tide_automated_listing_entity_reference_fields_exclude', [
-      $this->index,
-      $entity_reference_fields,
-      clone $items,
-      $delta,
-    ]);
-    if (!empty($excludes) && is_array($excludes)) {
-      $entity_reference_fields = $this->indexHelper::excludeArrayKey($entity_reference_fields, $excludes);
-    }
-
-    if (!empty($entity_reference_fields)) {
-      foreach ($entity_reference_fields as $field_id => $field_label) {
-        $default_values = $configuration['filters'][$field_id]['values'] ?? [];
-        $field_filter = $this->indexHelper->buildEntityReferenceFieldFilter($this->index, $field_id, $default_values);
-        if ($field_filter) {
-          $element['tabs']['filters'][$field_id . '_wrapper'] = [
-            '#type' => 'details',
-            '#title' => $field_label,
-            '#open' => FALSE,
-            '#collapsible' => TRUE,
-            '#group_name' => 'filters_' . $field_id . '_wrapper',
-          ];
-          $element['tabs']['filters'][$field_id . '_wrapper'][$field_id] = $field_filter;
-          $element['tabs']['filters'][$field_id . '_wrapper']['operator'] = $this->buildFilterOperatorSelect($configuration['filters'][$field_id]['operator'] ?? 'OR', $this->t('This filter operator is used to combined all the selected values together.'));
-          if (isset($configuration['filters'][$field_id])) {
-            $element['tabs']['filters'][$field_id . '_wrapper']['#open'] = TRUE;
-          }
-
-          // Special treatment for topic and tags.
-          if ($field_id == 'field_topic' || $field_id == 'field_tags') {
-            $element['tabs']['filters'][$field_id . '_wrapper']['#title'] = ($field_id == 'field_topic') ? $this->t('Topic') : $this->t('Tags');
-            $element['tabs']['filters'][$field_id . '_wrapper'][$field_id]['#title'] = ($field_id == 'field_topic') ? $this->t('Select topics') : $this->t('Select tags');
-            if (isset($configuration['filters'][$field_id]['values']) && empty($configuration['filters'][$field_id]['values'])) {
-              $element['tabs']['filters'][$field_id . '_wrapper']['#open'] = FALSE;
-            }
-            else {
-              $element['tabs']['filters'][$field_id . '_wrapper']['#open'] = TRUE;
-            }
-          }
-        }
-      }
-    }
 
     // Build extra filters.
     $extra_filters = $this->moduleHandler->invokeAll('tide_automated_listing_extra_filters_build', [
@@ -486,61 +557,6 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
   }
 
   /**
-   * Build Sort settings.
-   *
-   * @param \Drupal\Core\Field\FieldItemListInterface $items
-   *   Field items.
-   * @param int $delta
-   *   The current delta.
-   * @param array $element
-   *   The element.
-   * @param array $form
-   *   The form.
-   * @param \Drupal\Core\Form\FormStateInterface $form_state
-   *   The form state.
-   * @param array $configuration
-   *   The YAML configuration of the listing.
-   */
-  protected function buildSortSettingsTab(FieldItemListInterface $items, $delta, array &$element, array &$form, FormStateInterface $form_state, array $configuration = NULL) {
-    $element['tabs']['sort'] = [
-      '#type' => 'details',
-      '#title' => $this->t('Sort criteria'),
-      '#open' => TRUE,
-      '#collapsible' => TRUE,
-      '#group_name' => 'sort',
-    ];
-    $default_sort_by = '';
-    $date_fields = $this->indexHelper->getIndexDateFields($this->index);
-    if (!empty($configuration['sort']['field']) && !empty($date_fields[$configuration['sort']['field']])) {
-      $default_sort_by = $configuration['sort']['field'];
-    }
-    $element['tabs']['sort']['field'] = [
-      '#type' => 'select',
-      '#title' => $this->t('Sort by'),
-      '#default_value' => $default_sort_by,
-      '#options' => ['' => $this->t('- No sort -')] + $date_fields,
-    ];
-    $element['tabs']['sort']['direction'] = [
-      '#type' => 'select',
-      '#title' => $this->t('Sort order'),
-      '#default_value' => $configuration['sort']['direction'] ?? 'desc',
-      '#options' => [
-        'asc' => $this->t('Ascending'),
-        'desc' => $this->t('Descending'),
-      ],
-    ];
-
-    if ($this->indexHelper->isNodeStickyIndexedAsInteger($this->index)) {
-      $element['tabs']['sort']['with_sticky'] = [
-        '#type' => 'checkbox',
-        '#title' => $this->t("Consider 'Sticky at top of lists' option"),
-        '#default_value' => $configuration['sort']['with_sticky'] ?? FALSE,
-        '#description' => $this->t('If this option is selected, all other sorting criteria will be secondary to the stickied content.'),
-      ];
-    }
-  }
-
-  /**
    * {@inheritdoc}
    */
   public function massageFormValues(array $values, array $form, FormStateInterface $form_state) {
@@ -560,6 +576,7 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
         $config['card_display']['hide'][$card_field] = !empty($value['tabs']['display']['card_display_hide'][$card_field]) ? TRUE : FALSE;
       }
 
+      // Todo: This needs to be configured from settings file.
       $config['filter_operator'] = $value['tabs']['filters']['operator'] ?? 'AND';
       $config['filter_today']['status'] = (bool) $value['tabs']['filters']['today']['status'] ?? FALSE;
       $config['filter_today']['start_date'] = $value['tabs']['filters']['today']['start_date'] ?? '';
@@ -716,6 +733,7 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
     $configuration['display']['type'] = $configuration['display']['type'] ?? 'carousel';
     $configuration['display']['items_per_page'] = $configuration['display']['items_per_page'] ?? 0;
 
+    // Todo: This needs to be configured from settings file.
     $configuration['filter_operator'] = $configuration['filter_operator'] ?? 'AND';
     $configuration['filters'] = $configuration['filters'] ?? [];
 
