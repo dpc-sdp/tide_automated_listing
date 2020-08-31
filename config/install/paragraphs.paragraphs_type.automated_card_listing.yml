@@ -2,7 +2,7 @@ langcode: en
 status: true
 dependencies: {  }
 id: automated_card_listing
-label: 'Automated Card listing'
+label: 'Card Collection'
 icon_uuid: null
 description: 'A paragraph type to provide an automated listing with configurable filters.'
 behavior_plugins: {  }

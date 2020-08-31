@@ -358,7 +358,7 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
       }
 
       // Todo: As we have single content type selection now, remove the concept of or and and for content types
-//    $element['tabs']['results']['operator'] = $this->buildFilterOperatorSelect($configuration['filter_operator'] ?? 'AND', $this->t('This operator is used to combined the filters together.'));
+      $element['tabs']['results']['type_wrapper']['operator'] = $this->buildFilterOperatorSelect($configuration['filter_operator'] ?? 'AND', $this->t('This operator is used to combined the filters together.'));
 
       $entity_reference_fields = $this->getEntityReferenceFields();
 
