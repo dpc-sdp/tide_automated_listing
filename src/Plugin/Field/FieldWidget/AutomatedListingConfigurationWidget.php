@@ -2,7 +2,6 @@
 
 namespace Drupal\tide_automated_listing\Plugin\Field\FieldWidget;
 
-use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Field\FieldItemListInterface;
@@ -166,7 +165,6 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
 
     $this->buildResultsSettingsTab($items, $delta, $element, $form, $form_state, $configuration);
     $this->buildDisplaySettingsTab($items, $delta, $element, $form, $form_state, $configuration);
-    $this->buildFilterSettingsTab($items, $delta, $element, $form, $form_state, $configuration);
 
     return $element;
   }
@@ -195,6 +193,7 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
       '#collapsible' => TRUE,
       '#group_name' => 'display',
     ];
+
     $element['tabs']['display']['type'] = [
       '#type' => 'radios',
       '#title' => $this->t('Display as'),
@@ -209,15 +208,15 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
       '#type' => 'number',
       '#title' => $this->t('Minimum results to show'),
       '#default_value' => $configuration['display']['min'] ?? 1,
-      '#min' => 0,
+      '#min' => 1,
     ];
 
     $element['tabs']['display']['max'] = [
       '#type' => 'number',
       '#title' => $this->t('Maximum results to show'),
+      '#description' => $this->t('Enter \'0\' for no maximum limit'),
       '#default_value' => $configuration['display']['max'] ?? 0,
       '#min' => 0,
-      '#description' => $this->t('Enter \'0\' for no maximum limit')
     ];
 
     $element['tabs']['display']['min_not_met'] = [
@@ -246,7 +245,7 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
       '#title' => $this->t('Cards shown per page'),
       '#default_value' => $configuration['display']['items_per_page'] ?? 0,
       '#min' => 0,
-      '#description' => $this->t('If 0 is entered here, all items will show on the same page without pagination. Otherwise pagination will apply once the entered number is exceeded.'),
+      '#description' => $this->t('Enter \'0\' to show all results on one page'),
       '#states' => [
         'visible' => [
           ':input[name="' . $this->getFormStatesElementName('tabs|display|type', $items, $delta, $element) . '"]' => ['value' => 'grid'],
@@ -256,19 +255,20 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
 
     $default_sort_by = '';
     $date_fields = $this->indexHelper->getIndexDateFields($this->index);
-    if (!empty($configuration['display']['field']) && !empty($date_fields[$configuration['display']['field']])) {
-      $default_sort_by = $configuration['display']['field'];
+    if (!empty($configuration['display']['sort_by']) && !empty($date_fields[$configuration['display']['sort_by']])) {
+      $default_sort_by = $configuration['display']['sort_by'];
     }
-    $element['tabs']['display']['field'] = [
+
+    $element['tabs']['display']['sort_by'] = [
       '#type' => 'select',
       '#title' => $this->t('Sort by'),
       '#default_value' => $default_sort_by,
       '#options' => ['' => $this->t('- No sort -')] + $date_fields,
     ];
-    $element['tabs']['display']['direction'] = [
+    $element['tabs']['display']['sort_direction'] = [
       '#type' => 'select',
       '#title' => $this->t('Sort order'),
-      '#default_value' => $configuration['display']['direction'] ?? 'desc',
+      '#default_value' => $configuration['display']['sort_direction'] ?? 'desc',
       '#options' => [
         'asc' => $this->t('Ascending'),
         'desc' => $this->t('Descending'),
@@ -276,10 +276,10 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
     ];
 
     if ($this->indexHelper->isNodeStickyIndexedAsInteger($this->index)) {
-      $element['tabs']['display']['with_sticky'] = [
+      $element['tabs']['display']['sort_with_sticky'] = [
         '#type' => 'checkbox',
         '#title' => $this->t("Consider 'Sticky at top of lists' option"),
-        '#default_value' => $configuration['display']['with_sticky'] ?? FALSE,
+        '#default_value' => $configuration['display']['sort_with_sticky'] ?? FALSE,
         '#description' => $this->t('If this option is selected, all other sorting criteria will be secondary to the stickied content.'),
       ];
     }
@@ -311,7 +311,7 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
   }
 
   /**
-   * Build Display settings.
+   * Build Filters.
    *
    * @param \Drupal\Core\Field\FieldItemListInterface $items
    *   Field items.
@@ -332,150 +332,116 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
       '#title' => $this->t('Listing results'),
       '#open' => TRUE,
       '#collapsible' => TRUE,
-      '#tree' => TRUE,
       '#group_name' => 'results',
     ];
+    $element['tabs']['results']['operator'] = $this->buildFilterOperatorSelect($configuration['filter_operator'] ?? 'AND', $this->t('This operator is used to combined the filters together.'));
 
     // Content type filter.
     if ($this->indexHelper->isNodeTypeIndexed($this->index)) {
-      $contentTypes = $this->indexHelper->getNodeTypes();
-
       $element['tabs']['results']['type_wrapper'] = [
         '#type' => 'details',
         '#title' => $this->t('Content type'),
         '#open' => TRUE,
         '#collapsible' => TRUE,
-        '#group_name' => 'result_type_wrapper',
+        '#group_name' => 'filters_type_wrapper',
       ];
       $element['tabs']['results']['type_wrapper']['type'] = [
         '#type' => 'select',
-        '#title' => $this->t('Select Content types'),
-        '#options' => $contentTypes,
+        '#title' => $this->t('Select Content type'),
+        '#options' => $this->indexHelper->getNodeTypes(),
         '#default_value' => $configuration['results']['type']['values'] ?? [],
       ];
       if (isset($configuration['results']['type']['values']) && empty($configuration['results']['type']['values'])) {
         $element['tabs']['results']['type_wrapper']['#open'] = FALSE;
       }
+    }
 
-      // Todo: As we have single content type selection now, remove the concept of or and and for content types
-      $element['tabs']['results']['type_wrapper']['operator'] = $this->buildFilterOperatorSelect($configuration['filter_operator'] ?? 'AND', $this->t('This operator is used to combined the filters together.'));
+    // Generate all entity reference filters.
+    $entity_reference_fields = $this->getEntityReferenceFields();
+    // Allow other modules to remove entity reference filters.
+    $excludes = $this->moduleHandler->invokeAll('tide_automated_listing_entity_reference_fields_exclude', [
+      $this->index,
+      $entity_reference_fields,
+      clone $items,
+      $delta,
+    ]);
+    if (!empty($excludes) && is_array($excludes)) {
+      $entity_reference_fields = $this->indexHelper::excludeArrayKey($entity_reference_fields, $excludes);
+    }
 
-      $entity_reference_fields = $this->getEntityReferenceFields();
-
-      // Allow other modules to remove entity reference filters.
-      $excludes = $this->moduleHandler->invokeAll('tide_automated_listing_entity_reference_fields_exclude', [
-        $this->index,
-        $entity_reference_fields,
-        clone $items,
-        $delta,
-      ]);
-
-      if (!empty($excludes) && is_array($excludes)) {
-        $entity_reference_fields = $this->indexHelper::excludeArrayKey($entity_reference_fields, $excludes);
-      }
-
-      if (!empty($entity_reference_fields)) {
-        foreach ($entity_reference_fields as $field_id => $field_label) {
+    if (!empty($entity_reference_fields)) {
+      foreach ($entity_reference_fields as $field_id => $field_label) {
+        if ($field_id === 'field_topic' || $field_id === 'field_tags') {
           $default_values = $configuration['results'][$field_id]['values'] ?? [];
           $field_filter = $this->indexHelper->buildEntityReferenceFieldFilter($this->index, $field_id, $default_values);
-          if ($field_filter && ($field_id === 'field_topic' || $field_id === 'field_tags')) {
+          if ($field_filter) {
             $element['tabs']['results'][$field_id . '_wrapper'] = [
               '#type' => 'details',
               '#title' => $field_label,
               '#open' => FALSE,
               '#collapsible' => TRUE,
-              '#group_name' => 'results_' . $field_id . '_wrapper',
+              '#group_name' => 'filters_' . $field_id . '_wrapper',
             ];
             $element['tabs']['results'][$field_id . '_wrapper'][$field_id] = $field_filter;
-            $element['tabs']['results'][$field_id . '_wrapper']['operator'] = $this->buildFilterOperatorSelect($configuration['filters'][$field_id]['operator'] ?? 'OR', $this->t('This filter operator is used to combined all the selected values together.'));
-            if (isset($configuration['filters'][$field_id])) {
+            $element['tabs']['results'][$field_id . '_wrapper']['operator'] = $this->buildFilterOperatorSelect($configuration['results'][$field_id]['operator'] ?? 'OR', $this->t('This filter operator is used to combined all the selected values together.'));
+            if (isset($configuration['results'][$field_id])) {
               $element['tabs']['results'][$field_id . '_wrapper']['#open'] = TRUE;
             }
 
             $element['tabs']['results'][$field_id . '_wrapper']['#title'] = ($field_id == 'field_topic') ? $this->t('Topic') : $this->t('Tags');
             $element['tabs']['results'][$field_id . '_wrapper'][$field_id]['#title'] = ($field_id == 'field_topic') ? $this->t('Select topics') : $this->t('Select tags');
-            if (isset($configuration['results'][$field_id]['values']) && empty($configuration['filters'][$field_id]['values'])) {
+            $element['tabs']['results'][$field_id . '_wrapper'][$field_id]['#description'] = ($field_id == 'field_topic') ? $this->t('Separate multiple topics with comma') : $this->t('Separate multiple tags with comma');
+            if (isset($configuration['results'][$field_id]['values']) && empty($configuration['results'][$field_id]['values'])) {
               $element['tabs']['results'][$field_id . '_wrapper']['#open'] = FALSE;
             }
             else {
               $element['tabs']['results'][$field_id . '_wrapper']['#open'] = TRUE;
             }
-
-            $element['tabs']['results'][$field_id . '_wrapper']['#states'] = [
-              'invisible' => [
-                ':input[name="' . $this->getFormStatesElementName('tabs|results|type', $items, $delta, $element) . '"]' => ['value' => 'hide'],
-              ],
-            ];
           }
         }
+      }
 
-        $element['tabs']['results']['advanced_taxonomy_wrapper'] = [
-          '#type' => 'details',
-          '#title' => $this->t('Advanced Taxonomies'),
-          '#open' => TRUE,
-          '#collapsible' => TRUE,
-          '#group_name' => 'result_advanced_taxonomy_wrapper',
-          '#attributes' => ['id' => 'advanced-taxonomy-wrapper'],
-        ];
+      $element['tabs']['results']['advanced_taxonomy_wrapper'] = [
+        '#type' => 'details',
+        '#title' => $this->t('Advanced Taxonomies'),
+        '#open' => TRUE,
+        '#collapsible' => TRUE,
+        '#group_name' => 'result_advanced_taxonomy_wrapper',
+      ];
 
-        foreach ($entity_reference_fields as $field_id => $field_label) {
-          $default_values = $configuration['filters'][$field_id]['values'] ?? [];
+      foreach ($entity_reference_fields as $field_id => $field_label) {
+        if ($field_id !== 'field_topic' && $field_id !== 'field_tags') {
+          $default_values = $configuration['results']['advanced_taxonomy_wrapper'][$field_id]['values'] ?? [];
           $field_filter = $this->indexHelper->buildEntityReferenceFieldFilter($this->index, $field_id, $default_values);
-          if ($field_filter && ($field_id !== 'field_topic' && $field_id !== 'field_tags')) {
+          if ($field_filter) {
             $element['tabs']['results']['advanced_taxonomy_wrapper'][$field_id . '_wrapper'] = [
               '#type' => 'details',
               '#title' => $field_label,
               '#open' => FALSE,
               '#collapsible' => TRUE,
-              '#group_name' => 'results_' . $field_id . '_wrapper',
+              '#group_name' => 'filters_' . $field_id . '_wrapper',
             ];
             $element['tabs']['results']['advanced_taxonomy_wrapper'][$field_id . '_wrapper'][$field_id] = $field_filter;
-            $element['tabs']['results']['advanced_taxonomy_wrapper'][$field_id . '_wrapper']['operator'] = $this->buildFilterOperatorSelect($configuration['filters'][$field_id]['operator'] ?? 'OR', $this->t('This filter operator is used to combined all the selected values together.'));
-            if (isset($configuration['filters']['advanced_taxonomy_wrapper'][$field_id])) {
+            $element['tabs']['results']['advanced_taxonomy_wrapper'][$field_id . '_wrapper']['operator'] = $this->buildFilterOperatorSelect($configuration['results']['advanced_taxonomy_wrapper'][$field_id]['operator'] ?? 'OR', $this->t('This filter operator is used to combined all the selected values together.'));
+            if (isset($configuration['results']['advanced_taxonomy_wrapper'][$field_id])) {
               $element['tabs']['results']['advanced_taxonomy_wrapper'][$field_id . '_wrapper']['#open'] = TRUE;
             }
           }
         }
       }
     }
-  }
-
-  /**
-   * Build Filters.
-   *
-   * @param \Drupal\Core\Field\FieldItemListInterface $items
-   *   Field items.
-   * @param int $delta
-   *   The current delta.
-   * @param array $element
-   *   The element.
-   * @param array $form
-   *   The form.
-   * @param \Drupal\Core\Form\FormStateInterface $form_state
-   *   The form state.
-   * @param array $configuration
-   *   The YAML configuration of the listing.
-   */
-  protected function buildFilterSettingsTab(FieldItemListInterface $items, $delta, array &$element, array &$form, FormStateInterface $form_state, array $configuration = NULL) {
-    $element['tabs']['filters'] = [
-      '#type' => 'details',
-      '#title' => $this->t('Filters'),
-      '#open' => TRUE,
-      '#collapsible' => TRUE,
-      '#group_name' => 'filters',
-    ];
 
     // Build extra filters.
     $extra_filters = $this->moduleHandler->invokeAll('tide_automated_listing_extra_filters_build', [
       $this->index,
       clone $items,
       $delta,
-      $configuration['filters'],
+      $configuration['results'],
     ]);
     $context = [
       'index' => clone $items,
       'delta' => $delta,
-      'filters' => $configuration['filters'],
+      'filters' => $configuration['results'],
     ];
     $this->moduleHandler->alter('tide_automated_listing_extra_filters_build', $extra_filters, $this->index, $context);
     if (!empty($extra_filters) && is_array($extra_filters)) {
@@ -486,20 +452,20 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
         }
         $index_field = $this->index->getField($field_id);
         if ($index_field) {
-          $element['tabs']['filters'][$field_id . '_wrapper'] = [
+          $element['tabs']['results'][$field_id . '_wrapper'] = [
             '#type' => 'details',
             '#title' => $index_field->getLabel(),
             '#open' => FALSE,
             '#collapsible' => TRUE,
-            '#group_name' => 'filters' . $field_id . '_wrapper',
+            '#group_name' => 'results' . $field_id . '_wrapper',
           ];
-          $element['tabs']['filters'][$field_id . '_wrapper'][$field_id] = $field_filter;
+          $element['tabs']['results'][$field_id . '_wrapper'][$field_id] = $field_filter;
           if (empty($field_filter['#disable_filter_operator'])) {
-            $element['tabs']['filters'][$field_id . '_wrapper']['operator'] = $this->buildFilterOperatorSelect($configuration['filters'][$field_id]['operator'] ?? 'OR');
+            $element['tabs']['results'][$field_id . '_wrapper']['operator'] = $this->buildFilterOperatorSelect($configuration['results'][$field_id]['operator'] ?? 'OR');
           }
           unset($field_filter['#disable_filter_operator']);
-          if (isset($configuration['filters'][$field_id]['values'])) {
-            $element['tabs']['filters'][$field_id . '_wrapper']['#open'] = TRUE;
+          if (isset($configuration['results'][$field_id]['values'])) {
+            $element['tabs']['results'][$field_id . '_wrapper']['#open'] = TRUE;
           }
         }
       }
@@ -507,7 +473,7 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
 
     // Today filter.
     $date_fields = $this->indexHelper->getIndexDateFields($this->index);
-    $element['tabs']['filters']['today'] = [
+    $element['tabs']['results']['today'] = [
       '#type' => 'details',
       '#title' => $this->t('Filter from today for Event-like content types'),
       '#description' => $this->t('This filter is only enabled when there is a valid field mapping for both Start Date and End Date. Both Start Date and End Date can be mapped to the same date field.'),
@@ -515,7 +481,7 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
       '#collapsible' => TRUE,
       '#group_name' => 'filters_today',
     ];
-    $element['tabs']['filters']['today']['status'] = [
+    $element['tabs']['results']['today']['status'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Enable this filter'),
       '#default_value' => $configuration['filter_today']['status'] ?? FALSE,
@@ -529,21 +495,21 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
       $default_filter_today_end_date = '';
     }
     if (isset($configuration['filter_today']['status']) && empty($configuration['filter_today']['status'])) {
-      $element['tabs']['filters']['today']['#open'] = FALSE;
+      $element['tabs']['results']['today']['#open'] = FALSE;
     }
-    $element['tabs']['filters']['today']['start_date'] = [
+    $element['tabs']['results']['today']['start_date'] = [
       '#type' => 'select',
       '#title' => $this->t('Start Date'),
       '#default_value' => $default_filter_today_start_date,
       '#options' => ['' => $this->t('- No mapping -')] + $date_fields,
     ];
-    $element['tabs']['filters']['today']['end_date'] = [
+    $element['tabs']['results']['today']['end_date'] = [
       '#type' => 'select',
       '#title' => $this->t('End Date'),
       '#default_value' => $default_filter_today_end_date,
       '#options' => ['' => $this->t('- No mapping -')] + $date_fields,
     ];
-    $element['tabs']['filters']['today']['criteria'] = [
+    $element['tabs']['results']['today']['criteria'] = [
       '#type' => 'select',
       '#title' => $this->t('Criteria'),
       '#default_value' => $configuration['filter_today']['criteria'] ?? 'upcoming',
@@ -564,10 +530,10 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
     foreach ($values as $delta => &$value) {
       $config = [];
       $config['index'] = $this->fieldDefinition->getFieldStorageDefinition()->getSetting('index');
-      $config['results']['min'] = (int) $value['tabs']['results']['min'] ?? 0;
-      $config['results']['max'] = (int) $value['tabs']['results']['max'] ?? 0;
-      $config['results']['min_not_met'] = $value['tabs']['results']['min_not_met'] ?? 'hide';
-      $config['results']['no_results_message'] = $value['tabs']['results']['no_results_message'] ?? $this->t('There are currently now results');
+      $config['display']['min'] = (int) $value['tabs']['display']['min'] ?? 1;
+      $config['display']['max'] = (int) $value['tabs']['display']['max'] ?? 0;
+      $config['display']['min_not_met'] = $value['tabs']['display']['min_not_met'] ?? 'hide';
+      $config['display']['no_results_message'] = $value['tabs']['display']['no_results_message'] ?? $this->t('There are currently now results');
       $config['display']['type'] = $value['tabs']['display']['type'] ?? 'carousel';
       $config['display']['items_per_page'] = (int) $value['tabs']['display']['items_per_page'] ?? 0;
       $config['card_display']['date'] = $value['tabs']['display']['card_date'] ?? '';
@@ -576,67 +542,85 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
         $config['card_display']['hide'][$card_field] = !empty($value['tabs']['display']['card_display_hide'][$card_field]) ? TRUE : FALSE;
       }
 
-      // Todo: This needs to be configured from settings file.
-      $config['filter_operator'] = $value['tabs']['filters']['operator'] ?? 'AND';
-      $config['filter_today']['status'] = (bool) $value['tabs']['filters']['today']['status'] ?? FALSE;
-      $config['filter_today']['start_date'] = $value['tabs']['filters']['today']['start_date'] ?? '';
-      $config['filter_today']['end_date'] = $value['tabs']['filters']['today']['end_date'] ?? '';
-      $config['filter_today']['criteria'] = $value['tabs']['filters']['today']['criteria'] ?? 'upcoming';
+      $config['filter_operator'] = $value['tabs']['results']['operator'] ?? 'AND';
+      $config['filter_today']['status'] = (bool) $value['tabs']['results']['today']['status'] ?? FALSE;
+      $config['filter_today']['start_date'] = $value['tabs']['results']['today']['start_date'] ?? '';
+      $config['filter_today']['end_date'] = $value['tabs']['results']['today']['end_date'] ?? '';
+      $config['filter_today']['criteria'] = $value['tabs']['results']['today']['criteria'] ?? 'upcoming';
 
-      $config['filters']['type']['values'] = $value['tabs']['filters']['type_wrapper']['type'] ? array_values(array_filter($value['tabs']['filters']['type_wrapper']['type'])) : [];
-      $config['filters']['type']['operator'] = 'OR';
+      $config['results']['type']['values'] = $value['tabs']['results']['type_wrapper']['type'] ? [$value['tabs']['results']['type_wrapper']['type']] : [];
+      $config['results']['type']['operator'] = 'OR';
 
-      $entity_reference_fields = $this->getEntityReferenceFields();
-      foreach ($value['tabs']['filters'] as $wrapper_id => $wrapper) {
+      foreach ($value['tabs']['results']['advanced_taxonomy_wrapper'] as $wrapper_id => $wrapper) {
         $field_id = str_replace('_wrapper', '', $wrapper_id);
-        if (isset($wrapper[$field_id])) {
-          switch ($field_id) {
-            case 'type':
-            case 'today':
-            case 'operator':
-              break;
 
-            default:
-              // Entity reference fields.
-              if (isset($entity_reference_fields[$field_id])) {
-                foreach ($wrapper[$field_id] as $index => $reference) {
-                  if (!empty($reference['target_id'])) {
-                    $config['filters'][$field_id]['values'][] = (int) $reference['target_id'];
-                  }
-                }
-              }
-              // Extra fields.
-              else {
-                $config['filters'][$field_id]['values'] = is_array($wrapper[$field_id]) ? array_values(array_filter($wrapper[$field_id])) : [$wrapper[$field_id]];
-                $config['filters'][$field_id]['values'] = array_filter($config['filters'][$field_id]['values']);
-              }
+        $config['results']['advanced_taxonomy_wrapper'][$field_id]['values'] = $this->saveFilterValues($field_id, $wrapper);
 
-              if (!empty($wrapper['operator'])) {
-                $config['filters'][$field_id]['operator'] = $wrapper['operator'];
-              }
+        if (!empty($wrapper['operator'])) {
+          $config['results']['advanced_taxonomy_wrapper'][$field_id]['operator'] = $wrapper['operator'];
+        }
 
-              if (empty($config['filters'][$field_id]['values'])) {
-                unset($config['filters'][$field_id]);
-              }
-              break;
-          }
+        if (empty($config['results']['advanced_taxonomy_wrapper'][$field_id]['values'])) {
+          unset($config['results']['advanced_taxonomy_wrapper'][$field_id]);
         }
       }
 
-      if (!isset($config['filters']['field_topic'])) {
-        $config['filters']['field_topic'] = [];
-      }
-      if (!isset($config['filters']['field_tags'])) {
-        $config['filters']['field_tags'] = [];
+      foreach (['field_topic_wrapper', 'field_tags_wrapper'] as $wrapper_id) {
+        if (isset($value['tabs']['results'][$wrapper_id])) {
+          $wrapper = $value['tabs']['results'][$wrapper_id];
+          $field_id = str_replace('_wrapper', '', $wrapper_id);
+
+          $config['results'][$field_id]['values'] = $this->saveFilterValues($field_id, $wrapper);
+
+          if (!empty($wrapper['operator'])) {
+            $config['results'][$field_id]['operator'] = $wrapper['operator'];
+          }
+        }
+
+        if (empty($config['results'][$field_id]) && empty($config['results'][$field_id]['values'])) {
+          $config['results'][$field_id] = [];
+        }
       }
 
-      $config['sort']['field'] = $value['tabs']['sort']['field'] ?? '';
-      $config['sort']['direction'] = $value['tabs']['sort']['direction'] ?? 'desc';
+      $config['display']['sort_by'] = $value['tabs']['display']['sort_by'] ?? '';
+      $config['display']['sort_direction'] = $value['tabs']['display']['sort_direction'] ?? 'desc';
 
-      if (isset($value['tabs']['sort']['with_sticky'])) {
-        $config['sort']['with_sticky'] = (boolean) $value['tabs']['sort']['with_sticky'] ?? FALSE;
+      if (isset($value['tabs']['display']['sort_with_sticky'])) {
+        $config['display']['sort_with_sticky'] = (boolean) $value['tabs']['display']['sort_with_sticky'] ?? FALSE;
       }
       $value['value'] = Yaml::encode($config);
+    }
+
+    return $values;
+  }
+
+  protected function saveFilterValues($field_id, $wrapper) {
+    $entity_reference_fields = $this->getEntityReferenceFields();
+    $values = [];
+
+    if (isset($wrapper[$field_id])) {
+      switch ($field_id) {
+        case 'type':
+        case 'today':
+        case 'operator':
+          return $values;
+
+        default:
+          // Entity reference fields.
+          if (isset($entity_reference_fields[$field_id])) {
+            foreach ($wrapper[$field_id] as $index => $reference) {
+              if (!empty($reference['target_id'])) {
+                $values[] = (int) $reference['target_id'];
+              }
+            }
+          }
+          // Extra fields.
+          else {
+            $values = array_filter(is_array($wrapper[$field_id]) ? array_values(array_filter($wrapper[$field_id])) : [$wrapper[$field_id]]);
+          }
+
+          return $values;
+      }
     }
 
     return $values;
@@ -725,19 +709,17 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
    *   The configuration.
    */
   protected function getDefaultConfiguration($configuration) {
-    $configuration['results']['min'] = $configuration['results']['min'] ?? 0;
-    $configuration['results']['max'] = $configuration['results']['max'] ?? 0;
-    $configuration['results']['min_not_met'] = $configuration['results']['min_not_met'] ?? 'hide';
-    $configuration['results']['no_results_message'] = $configuration['results']['no_results_message'] ?? '';
+    $configuration['display']['min'] = $configuration['display']['min'] ?? 1;
+    $configuration['display']['max'] = $configuration['display']['max'] ?? 0;
+    $configuration['display']['min_not_met'] = $configuration['display']['min_not_met'] ?? 'hide';
+    $configuration['display']['no_results_message'] = $configuration['display']['no_results_message'] ?? '';
 
     $configuration['display']['type'] = $configuration['display']['type'] ?? 'carousel';
     $configuration['display']['items_per_page'] = $configuration['display']['items_per_page'] ?? 0;
 
-    // Todo: This needs to be configured from settings file.
     $configuration['filter_operator'] = $configuration['filter_operator'] ?? 'AND';
-    $configuration['filters'] = $configuration['filters'] ?? [];
 
-    $configuration['sort'] = $configuration['sort'] ?? [];
+    $configuration['results'] = $configuration['results'] ?? [];
 
     return $configuration;
   }
