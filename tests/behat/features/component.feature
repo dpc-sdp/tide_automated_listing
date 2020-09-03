@@ -9,7 +9,7 @@ Feature: Automated Listing component in Landing Page
     When I visit "node/add/landing_page"
 
     # And I should see text matching "Body Content"
-    And I should see "Automated Card listing" in the "select[name='field_landing_page_component[add_more][add_more_select]']" element
+    And I should see "Card collection" in the "select[name='field_landing_page_component[add_more][add_more_select]']" element
 
   @api @javascript @jsonapi
   Scenario: Request a landing page with an automated listing component via API
@@ -31,7 +31,7 @@ Feature: Automated Listing component in Landing Page
     When I edit landing_page "[TEST] Landing Page title"
     And I click on link with href "#edit-group-components"
 
-    And I select "Automated Card listing" from "edit-field-landing-page-component-add-more-add-more-select"
+    And I select "Card collection" from "edit-field-landing-page-component-add-more-add-more-select"
     And I press the "edit-field-landing-page-component-add-more-add-more-button" button
     Then I wait for AJAX to finish
 
