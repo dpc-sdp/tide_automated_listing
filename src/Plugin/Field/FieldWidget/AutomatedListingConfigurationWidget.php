@@ -204,21 +204,6 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
       '#default_value' => $configuration['display']['type'] ?? 'carousel',
     ];
 
-    $element['tabs']['display']['min'] = [
-      '#type' => 'number',
-      '#title' => $this->t('Minimum results to show'),
-      '#default_value' => $configuration['display']['min'] ?? 1,
-      '#min' => 1,
-    ];
-
-    $element['tabs']['display']['max'] = [
-      '#type' => 'number',
-      '#title' => $this->t('Maximum results to show'),
-      '#description' => $this->t('Enter \'0\' for no maximum limit'),
-      '#default_value' => $configuration['display']['max'] ?? 0,
-      '#min' => 0,
-    ];
-
     $element['tabs']['display']['min_not_met'] = [
       '#type' => 'radios',
       '#title' => $this->t('If minimum count is not met'),
@@ -246,11 +231,6 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
       '#default_value' => $configuration['display']['items_per_page'] ?? 0,
       '#min' => 0,
       '#description' => $this->t('Enter \'0\' to show all results on one page'),
-      '#states' => [
-        'visible' => [
-          ':input[name="' . $this->getFormStatesElementName('tabs|display|type', $items, $delta, $element) . '"]' => ['value' => 'grid'],
-        ],
-      ],
     ];
 
     $default_sort_by = '';
@@ -530,8 +510,6 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
     foreach ($values as $delta => &$value) {
       $config = [];
       $config['index'] = $this->fieldDefinition->getFieldStorageDefinition()->getSetting('index');
-      $config['display']['min'] = (int) $value['tabs']['display']['min'] ?? 1;
-      $config['display']['max'] = (int) $value['tabs']['display']['max'] ?? 0;
       $config['display']['min_not_met'] = $value['tabs']['display']['min_not_met'] ?? 'hide';
       $config['display']['no_results_message'] = $value['tabs']['display']['no_results_message'] ?? $this->t('There are currently now results');
       $config['display']['type'] = $value['tabs']['display']['type'] ?? 'carousel';
@@ -548,7 +526,7 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
       $config['filter_today']['end_date'] = $value['tabs']['results']['today']['end_date'] ?? '';
       $config['filter_today']['criteria'] = $value['tabs']['results']['today']['criteria'] ?? 'upcoming';
 
-      $config['results']['type']['values'] = $value['tabs']['results']['type_wrapper']['type'] ? [$value['tabs']['results']['type_wrapper']['type']] : [];
+      $config['results']['type']['values'] = $value['tabs']['results']['type_wrapper']['type'] ? $value['tabs']['results']['type_wrapper']['type'] : '';
       $config['results']['type']['operator'] = 'OR';
 
       foreach ($value['tabs']['results']['advanced_taxonomy_wrapper'] as $wrapper_id => $wrapper) {
@@ -709,8 +687,6 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
    *   The configuration.
    */
   protected function getDefaultConfiguration($configuration) {
-    $configuration['display']['min'] = $configuration['display']['min'] ?? 1;
-    $configuration['display']['max'] = $configuration['display']['max'] ?? 0;
     $configuration['display']['min_not_met'] = $configuration['display']['min_not_met'] ?? 'hide';
     $configuration['display']['no_results_message'] = $configuration['display']['no_results_message'] ?? '';
 
