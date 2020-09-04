@@ -72,7 +72,8 @@ class AutomatedListingConfigurationEnhancer extends ResourceFieldEnhancerBase {
     }
 
     if (isset($configuration['results']['advanced_taxonomy_wrapper'])) {
-      $configuration['filters']['advanced_taxonomy_wrapper'] = $configuration['results']['advanced_taxonomy_wrapper'];
+      $advanced_taxonomy_wrapper = array_merge($configuration['filters'], $configuration['results']['advanced_taxonomy_wrapper']);
+      $configuration['filters'] = $advanced_taxonomy_wrapper;
       unset($configuration['results']['advanced_taxonomy_wrapper']);
     }
 
