@@ -214,10 +214,16 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
       '#default_value' => $configuration['display']['min_not_met'] ?? 'hide',
     ];
 
+    $no_result_message = $this->t('There are currently no results');
+
+    if (!empty($configuration['display']['no_results_message'])) {
+      $no_result_message = $configuration['display']['no_results_message'];
+    }
+
     $element['tabs']['display']['no_results_message'] = [
       '#type' => 'textfield',
       '#title' => $this->t("'No results' message"),
-      '#default_value' => $configuration['display']['no_results_message'] ?? $this->t('There are currently no results'),
+      '#default_value' => $no_result_message,
       '#states' => [
         'invisible' => [
           ':input[name="' . $this->getFormStatesElementName('tabs|display|min_not_met', $items, $delta, $element) . '"]' => ['value' => 'hide'],
