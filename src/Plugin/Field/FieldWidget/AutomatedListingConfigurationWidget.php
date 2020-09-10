@@ -195,7 +195,7 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
     ];
 
     $element['tabs']['display']['type'] = [
-      '#type' => 'radios',
+      '#type' => 'select',
       '#title' => $this->t('Display as'),
       '#options' => [
         'carousel' => $this->t('Carousel'),
@@ -532,7 +532,7 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
       $config['filter_today']['end_date'] = $value['tabs']['results']['today']['end_date'] ?? '';
       $config['filter_today']['criteria'] = $value['tabs']['results']['today']['criteria'] ?? 'upcoming';
 
-      $config['results']['type']['values'] = $value['tabs']['results']['type_wrapper']['type'] ? $value['tabs']['results']['type_wrapper']['type'] : '';
+      $config['results']['type']['values'] = $value['tabs']['results']['type_wrapper']['type'] ? array_values(array_filter($value['tabs']['results']['type_wrapper']['type'])) : [];
       $config['results']['type']['operator'] = 'OR';
 
       foreach ($value['tabs']['results']['advanced_taxonomy_wrapper'] as $wrapper_id => $wrapper) {
