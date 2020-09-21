@@ -1,0 +1,2 @@
+expose_filter_operator: FALSE
+default_filter_operator: OR
