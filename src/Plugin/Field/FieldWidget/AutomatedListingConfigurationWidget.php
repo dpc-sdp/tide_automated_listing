@@ -360,6 +360,7 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
         '#title' => $this->t('Select Content type'),
         '#options' => array_merge(['' => $this->t('Any Content Type')], $this->indexHelper->getNodeTypes()),
         '#default_value' => $configuration['results']['type']['values'] ?? [],
+        '#required' => TRUE
       ];
       if (isset($configuration['results']['type']['values']) && empty($configuration['results']['type']['values'])) {
         $element['tabs']['results']['type_wrapper']['#open'] = FALSE;
