@@ -517,6 +517,7 @@ class SearchApiIndexHelper {
           'label' => $field->getLabel(),
           'target_type' => $target_type,
           'target_bundles' => $settings['handler_settings']['target_bundles'] ?? [],
+          'path' => $field->getPropertyPath()
         ];
       }
       catch (\Exception $exception) {
@@ -576,7 +577,10 @@ class SearchApiIndexHelper {
     $reference_fields = $this->extractIndexEntityReferenceFields($index, $excludes);
     $fields = [];
     foreach ($reference_fields as $field_id => $field_info) {
-      $fields[$field_id] = $field_info['label'];
+      $fields[$field_id] = [
+        'label' => $field_info['label'],
+        'path' => $field_info['path'],
+      ];
     }
 
     return $fields;

@@ -388,14 +388,14 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
     }
 
     if (!empty($entity_reference_fields)) {
-      foreach ($entity_reference_fields as $field_id => $field_label) {
+      foreach ($entity_reference_fields as $field_id => $field_settings) {
         if ($field_id === 'field_topic' || $field_id === 'field_tags') {
           $default_values = $configuration['results'][$field_id]['values'] ?? [];
           $field_filter = $this->indexHelper->buildEntityReferenceFieldFilter($this->index, $field_id, $default_values);
           if ($field_filter) {
             $element['tabs']['results'][$field_id . '_wrapper'] = [
               '#type' => 'details',
-              '#title' => $field_label,
+              '#title' => $field_settings['label'],
               '#open' => FALSE,
               '#collapsible' => TRUE,
               '#group_name' => 'filters_' . $field_id . '_wrapper',
@@ -449,14 +449,14 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
         ]
       ];
 
-      foreach ($entity_reference_fields as $field_id => $field_label) {
+      foreach ($entity_reference_fields as $field_id => $field_settings) {
         if ($field_id !== 'field_topic' && $field_id !== 'field_tags') {
           $default_values = $configuration['results']['advanced_taxonomy_wrapper'][$field_id]['values'] ?? [];
           $field_filter = $this->indexHelper->buildEntityReferenceFieldFilter($this->index, $field_id, $default_values);
           if ($field_filter) {
             $element['tabs']['results']['advanced_taxonomy_wrapper'][$field_id . '_wrapper'] = [
               '#type' => 'details',
-              '#title' => $field_label,
+              '#title' => $field_settings['label'],
               '#open' => FALSE,
               '#collapsible' => TRUE,
               '#group_name' => 'filters_' . $field_id . '_wrapper',
@@ -470,11 +470,15 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
             }
 
             $visible = [];
+
             foreach ($contentTypesDefinitions as $key => $value) {
-              if (in_array($field_id, $value)) {
-                $visible[] = [
-                  ':input[name="' . $this->getFormStatesElementName('tabs|results|type_wrapper|type', $items, $delta, $element) . '"]' => ['value' => $key],
-                ];
+              foreach ($value as $item) {
+                if (strpos($field_settings['path'], $item) !== FALSE) {
+                  $visible[] = [
+                    ':input[name="' . $this->getFormStatesElementName('tabs|results|type_wrapper|type', $items, $delta, $element) . '"]' => ['value' => $key],
+                  ];
+                  continue;
+                }
               }
             }
 
