@@ -217,13 +217,13 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
     ];
 
     $element['tabs']['display']['type'] = [
-      '#type' => 'select',
+      '#type' => 'radios',
       '#title' => $this->t('Display as'),
       '#options' => [
-        'carousel' => $this->t('Carousel'),
         'grid' => $this->t('Grid'),
+        'carousel' => $this->t('Carousel'),
       ],
-      '#default_value' => $configuration['display']['type'] ?? 'carousel',
+      '#default_value' => $configuration['display']['type'] ?? 'grid',
     ];
 
     $element['tabs']['display']['min_not_met'] = [
@@ -357,10 +357,11 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
 
       $element['tabs']['results']['type_wrapper']['type'] = [
         '#type' => 'select',
-        '#title' => $this->t('Select Content type'),
-        '#options' => array_merge(['' => $this->t('Any Content Type')], $this->indexHelper->getNodeTypes()),
+        '#title' => $this->t('Show content type'),
+        '#options' => array_merge(['' => $this->t('- Select content type -')], $this->indexHelper->getNodeTypes()),
         '#default_value' => $configuration['results']['type']['values'] ?? [],
-        '#required' => TRUE
+        '#required' => TRUE,
+        '#description' => $this->t('Select the content type you would like to show in your collection')
       ];
       if (isset($configuration['results']['type']['values']) && empty($configuration['results']['type']['values'])) {
         $element['tabs']['results']['type_wrapper']['#open'] = FALSE;
@@ -600,7 +601,7 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
       $config['index'] = $this->fieldDefinition->getFieldStorageDefinition()->getSetting('index');
       $config['display']['min_not_met'] = $value['tabs']['display']['min_not_met'] ?? 'hide';
       $config['display']['no_results_message'] = $value['tabs']['display']['no_results_message'] ?? $this->t('There are currently now results');
-      $config['display']['type'] = $value['tabs']['display']['type'] ?? 'carousel';
+      $config['display']['type'] = $value['tabs']['display']['type'] ?? 'grid';
       $config['display']['items_per_page'] = (int) $value['tabs']['display']['items_per_page'] ?? 9;
       $config['card_display']['date'] = $value['tabs']['display']['card_date'] ?? '';
       $card_fields = ['image', 'title', 'summary', 'topic', 'location'];
@@ -729,7 +730,7 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
    *   The reference fields.
    */
   protected function getEntityReferenceFields() {
-    $reference_fields = $this->indexHelper->getIndexEntityReferenceFields($this->index, ['nid']);
+    $reference_fields = $this->indexHelper->getIndexEntityReferenceFields($this->index, ['nid', 'uid']);
     $fields = [];
     $top_fields = ['field_topic', 'field_tags'];
     foreach ($top_fields as $field_id) {
@@ -784,7 +785,7 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
     $configuration['display']['min_not_met'] = $configuration['display']['min_not_met'] ?? 'hide';
     $configuration['display']['no_results_message'] = $configuration['display']['no_results_message'] ?? '';
 
-    $configuration['display']['type'] = $configuration['display']['type'] ?? 'carousel';
+    $configuration['display']['type'] = $configuration['display']['type'] ?? 'grid';
     $configuration['display']['items_per_page'] = $configuration['display']['items_per_page'] ?? 9;
 
     $configuration['filter_operator'] = $configuration['filter_operator'] ?? $this->config->get('default_filter_operator');
