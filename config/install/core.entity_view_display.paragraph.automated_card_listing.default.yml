@@ -8,7 +8,6 @@ dependencies:
     - field.field.paragraph.automated_card_listing.field_paragraph_title
     - paragraphs.paragraphs_type.automated_card_listing
   module:
-    - link
     - tide_automated_listing
 id: paragraph.automated_card_listing.default
 targetEntityType: paragraph
@@ -22,26 +21,6 @@ content:
     third_party_settings: {  }
     type: automated_listing_configuration
     region: content
-  field_paragraph_cta:
-    type: link
-    weight: 3
-    region: content
-    label: above
-    settings:
-      trim_length: 80
-      url_only: false
-      url_plain: false
-      rel: ''
-      target: ''
-    third_party_settings: {  }
-  field_paragraph_cta_text:
-    type: string
-    weight: 2
-    region: content
-    label: above
-    settings:
-      link_to_entity: false
-    third_party_settings: {  }
   field_paragraph_title:
     weight: 0
     label: above
@@ -51,4 +30,6 @@ content:
     type: string
     region: content
 hidden:
+  field_paragraph_cta: true
+  field_paragraph_cta_text: true
   search_api_excerpt: true
