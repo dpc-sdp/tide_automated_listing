@@ -13,9 +13,7 @@ use Drupal\Core\Serialization\Yaml;
 function tide_automated_listing_update_8002() {
   $paragraphs = \Drupal::entityQuery('paragraph')
     ->condition('type', 'automated_card_listing')
-    ->exists('field_paragraph_auto_listingconfig
-src
-tide_automated_listing.info.yml')
+    ->exists('field_paragraph_auto_listing')
     ->execute();
 
   if ($paragraphs) {

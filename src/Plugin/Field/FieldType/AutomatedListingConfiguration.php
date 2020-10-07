@@ -68,8 +68,10 @@ class AutomatedListingConfiguration extends StringLongItem {
    */
   public static function defaultStorageSettings() {
     return [
-      'index' => 'node',
-    ] + parent::defaultStorageSettings();
+        'index' => 'node',
+        'expose_filter_operator' => 0,
+        'default_filter_operator' => 'OR'
+      ] + parent::defaultStorageSettings();
   }
 
   /**
@@ -90,6 +92,36 @@ class AutomatedListingConfiguration extends StringLongItem {
       '#title' => t('Search API Index'),
       '#options' => $options,
       '#default_value' => $default_value,
+      '#required' => TRUE,
+      '#weight' => -10,
+      '#disabled' => $has_data,
+    ];
+
+    $expose_filter_operator_default_value = $this->getSetting('expose_filter_operator');
+    if (!isset($options[$expose_filter_operator_default_value])) {
+      $expose_filter_operator_default_value = 0;
+    }
+
+    $element['expose_filter_operator'] = [
+      '#type' => 'radios',
+      '#title' => t('Expose Filter Operator'),
+      '#options' => [0 => 'Hide', 1 => 'Show'],
+      '#default_value' => $expose_filter_operator_default_value,
+      '#required' => TRUE,
+      '#weight' => -10,
+      '#disabled' => $has_data,
+    ];
+
+    $default_filter_operator_value = $this->getSetting('default_filter_operator');
+    if (!isset($options[$default_filter_operator_value])) {
+      $default_filter_operator_value = 'OR';
+    }
+
+    $element['default_filter_operator'] = [
+      '#type' => 'radios',
+      '#title' => t('Default Filter Operator'),
+      '#options' => ['AND' => 'AND', 'OR' => 'OR'],
+      '#default_value' => $default_filter_operator_value,
       '#required' => TRUE,
       '#weight' => -10,
       '#disabled' => $has_data,

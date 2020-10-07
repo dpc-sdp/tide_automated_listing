@@ -18,6 +18,5 @@ config_devel:
     - field.field.paragraph.automated_card_listing.field_paragraph_title
     - field.storage.paragraph.field_paragraph_auto_listing
     - paragraphs.paragraphs_type.automated_card_listing
-    - tide_automated_listing.settings
   optional:
     - jsonapi_extras.jsonapi_resource_config.paragraph--automated_card_listing

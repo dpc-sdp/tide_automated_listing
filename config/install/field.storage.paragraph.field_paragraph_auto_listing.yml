@@ -11,6 +11,8 @@ type: automated_listing_configuration
 settings:
   case_sensitive: false
   index: node
+  expose_filter_operator: 0
+  default_filter_operator: OR
 module: tide_automated_listing
 locked: false
 cardinality: 1
