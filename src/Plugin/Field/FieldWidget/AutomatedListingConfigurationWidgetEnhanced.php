@@ -458,26 +458,14 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
               $element['tabs']['results'][$field_id . '_wrapper']['#open'] = TRUE;
             }
 
-            $visible = [];
             $visible_content_types = [];
             foreach ($contentTypesDefinitions as $key => $value) {
               if (in_array($field_id, $value)) {
-                $visible[] = [
-                  ':input[name="' . $this->getFormStatesElementName('tabs|results|type_wrapper|type', $items, $delta, $element) . '[' . $key . ']' . '"]' => ['checked' => TRUE],
-                ];
                 $visible_content_types[] = $key;
               }
             }
 
             $element['tabs']['results'][$field_id . '_wrapper']['visible_types'] = $this->buildHiddenValueStates($visible_content_types);
-
-
-            if (!empty($visible)) {
-              $element['tabs']['results'][$field_id . '_wrapper']['#states']['visible'] = $visible;
-            } else {
-              $element['tabs']['results'][$field_id . '_wrapper']['#access'] = FALSE;
-            }
-
           }
         }
       }
@@ -496,9 +484,6 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
         '#open' => TRUE,
         '#collapsible' => TRUE,
         '#group_name' => 'result_advanced_taxonomy_wrapper',
-        '#states' => [
-          'visible' => $advanced_taxonomy_wrapper_visibility
-        ]
       ];
 
       foreach ($entity_reference_fields as $field_id => $field_settings) {
@@ -527,9 +512,9 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
             foreach ($contentTypesDefinitions as $key => $value) {
               foreach ($value as $item) {
                 if (strpos($field_settings['path'], $item) !== FALSE) {
-                  $visible[] = [
+                  $visible = array_merge($visible, [
                     ':input[name="' . $this->getFormStatesElementName('tabs|results|type_wrapper|type', $items, $delta, $element) . '[' . $key . ']' . '"]' => ['checked' => TRUE],
-                  ];
+                  ]);
                   $visible_content_types[] = $key;
                   continue;
                 }
