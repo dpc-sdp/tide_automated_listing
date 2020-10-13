@@ -89,8 +89,43 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
   /**
    * {@inheritdoc}
    */
+  public static function defaultSettings() {
+    return [
+        'expose_filter_operator' => 0,
+        'default_filter_operator' => 'OR',
+        'excluded_fields' => "uid",
+      ] + parent::defaultSettings();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function settingsForm(array $form, FormStateInterface $form_state) {
-    return [];
+    $element['expose_filter_operator'] = [
+      '#type' => 'radios',
+      '#title' => t('Expose Filter Operator'),
+      '#options' => [0 => 'Hide', 1 => 'Show'],
+      '#default_value' => $this->getSetting('expose_filter_operator'),
+      '#required' => TRUE,
+    ];
+
+    $element['default_filter_operator'] = [
+      '#type' => 'radios',
+      '#title' => t('Default Filter Operator'),
+      '#options' => ['AND' => 'AND', 'OR' => 'OR'],
+      '#default_value' => $this->getSetting('default_filter_operator'),
+      '#required' => TRUE,
+    ];
+
+    $element['excluded_fields'] = [
+      '#type' => 'textfield',
+      '#title' => t('Fields to exclude'),
+      '#description' => t('Enter comma separated fields to exclude. Example: nid,uid'),
+      '#default_value' => $this->getSetting('excluded_fields'),
+      '#required' => TRUE,
+    ];
+
+    return $element;
   }
 
   /**
@@ -297,7 +332,7 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
       '#options' => ['' => $this->t('- Does not show -')] + $date_fields,
     ];
 
-    if ($this->fieldDefinition->getFieldStorageDefinition()->getSetting('expose_filter_operator') == FALSE) {
+    if ($this->settings['expose_filter_operator'] == FALSE) {
       $element['tabs']['display']['card_date']['#access'] = FALSE;
     }
 
@@ -314,7 +349,8 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
       ],
     ];
 
-    if ($this->fieldDefinition->getFieldStorageDefinition()->getSetting('expose_filter_operator') == FALSE) {
+
+    if ($this->settings['expose_filter_operator'] == FALSE) {
       $element['tabs']['display']['card_display_hide']['#access'] = FALSE;
     }
 
@@ -345,7 +381,7 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
       '#group_name' => 'results',
     ];
 
-    $element['tabs']['results']['operator'] = $this->buildFilterOperatorSelect($configuration['filter_operator'] ?? $this->fieldDefinition->getFieldStorageDefinition()->getSetting('default_filter_operator'), $this->t('This operator is used to combined the filters together.'));
+    $element['tabs']['results']['operator'] = $this->buildFilterOperatorSelect($configuration['filter_operator'] ?? $this->settings['default_filter_operator'], $this->t('This operator is used to combined the filters together.'));
 
     // Content type filter.
     if ($this->indexHelper->isNodeTypeIndexed($this->index)) {
@@ -406,7 +442,7 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
             ];
             $element['tabs']['results'][$field_id . '_wrapper'][$field_id] = $field_filter;
 
-            $element['tabs']['results'][$field_id . '_wrapper']['operator'] = $this->buildFilterOperatorSelect($configuration['results'][$field_id]['operator'] ?? $this->fieldDefinition->getFieldStorageDefinition()->getSetting('default_filter_operator'), $this->t('This filter operator is used to combined all the selected values together.'));
+            $element['tabs']['results'][$field_id . '_wrapper']['operator'] = $this->buildFilterOperatorSelect($configuration['results'][$field_id]['operator'] ?? $this->settings['default_filter_operator'], $this->t('This filter operator is used to combined all the selected values together.'));
 
             if (isset($configuration['results'][$field_id])) {
               $element['tabs']['results'][$field_id . '_wrapper']['#open'] = TRUE;
@@ -423,13 +459,18 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
             }
 
             $visible = [];
+            $visible_content_types = [];
             foreach ($contentTypesDefinitions as $key => $value) {
               if (in_array($field_id, $value)) {
                 $visible[] = [
                   ':input[name="' . $this->getFormStatesElementName('tabs|results|type_wrapper|type', $items, $delta, $element) . '[' . $key . ']' . '"]' => ['checked' => TRUE],
                 ];
+                $visible_content_types[] = $key;
               }
             }
+
+            $element['tabs']['results'][$field_id . '_wrapper']['visible_types'] = $this->buildHiddenValueStates($visible_content_types);
+
 
             if (!empty($visible)) {
               $element['tabs']['results'][$field_id . '_wrapper']['#states']['visible'] = $visible;
@@ -474,13 +515,14 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
             ];
             $element['tabs']['results']['advanced_taxonomy_wrapper'][$field_id . '_wrapper'][$field_id] = $field_filter;
 
-            $element['tabs']['results']['advanced_taxonomy_wrapper'][$field_id . '_wrapper']['operator'] = $this->buildFilterOperatorSelect($configuration['results']['advanced_taxonomy_wrapper'][$field_id]['operator'] ?? $this->fieldDefinition->getFieldStorageDefinition()->getSetting('default_filter_operator'), $this->t('This filter operator is used to combined all the selected values together.'));
+            $element['tabs']['results']['advanced_taxonomy_wrapper'][$field_id . '_wrapper']['operator'] = $this->buildFilterOperatorSelect($configuration['results']['advanced_taxonomy_wrapper'][$field_id]['operator'] ?? $this->settings['default_filter_operator'], $this->t('This filter operator is used to combined all the selected values together.'));
 
             if (isset($configuration['results']['advanced_taxonomy_wrapper'][$field_id])) {
               $element['tabs']['results']['advanced_taxonomy_wrapper'][$field_id . '_wrapper']['#open'] = TRUE;
             }
 
             $visible = [];
+            $visible_content_types = [];
 
             foreach ($contentTypesDefinitions as $key => $value) {
               foreach ($value as $item) {
@@ -488,10 +530,13 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
                   $visible[] = [
                     ':input[name="' . $this->getFormStatesElementName('tabs|results|type_wrapper|type', $items, $delta, $element) . '[' . $key . ']' . '"]' => ['checked' => TRUE],
                   ];
+                  $visible_content_types[] = $key;
                   continue;
                 }
               }
             }
+
+            $element['tabs']['results']['advanced_taxonomy_wrapper'][$field_id . '_wrapper']['visible_types'] = $this->buildHiddenValueStates($visible_content_types);
 
             if (!empty($visible)) {
               $element['tabs']['results']['advanced_taxonomy_wrapper'][$field_id . '_wrapper']['#states']['visible'] = $visible;
@@ -534,7 +579,7 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
           $element['tabs']['results'][$field_id . '_wrapper'][$field_id] = $field_filter;
 
           if (empty($field_filter['#disable_filter_operator'])) {
-            $element['tabs']['results'][$field_id . '_wrapper']['operator'] = $this->buildFilterOperatorSelect($configuration['results'][$field_id]['operator'] ?? $this->fieldDefinition->getFieldStorageDefinition()->getSetting('default_filter_operator'));
+            $element['tabs']['results'][$field_id . '_wrapper']['operator'] = $this->buildFilterOperatorSelect($configuration['results'][$field_id]['operator'] ?? $this->settings['default_filter_operator']);
           }
 
           unset($field_filter['#disable_filter_operator']);
@@ -623,22 +668,44 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
         $config['card_display']['hide'][$card_field] = !empty($value['tabs']['display']['card_display_hide'][$card_field]) ? TRUE : FALSE;
       }
 
-      $config['filter_operator'] = $value['tabs']['results']['operator'] ?? $this->fieldDefinition->getFieldStorageDefinition()->getSetting('default_filter_operator');
+      $config['filter_operator'] = $value['tabs']['results']['operator'] ?? $this->settings['default_filter_operator'];
       $config['filter_today']['status'] = (bool) $value['tabs']['results']['today']['status'] ?? FALSE;
       $config['filter_today']['start_date'] = $value['tabs']['results']['today']['start_date'] ?? '';
       $config['filter_today']['end_date'] = $value['tabs']['results']['today']['end_date'] ?? '';
       $config['filter_today']['criteria'] = $value['tabs']['results']['today']['criteria'] ?? 'upcoming';
 
       $config['results']['type']['values'] = $value['tabs']['results']['type_wrapper']['type'] ? array_values(array_filter($value['tabs']['results']['type_wrapper']['type'])) : [];
-      $config['results']['type']['operator'] = $this->fieldDefinition->getFieldStorageDefinition()->getSetting('default_filter_operator');
+      $config['results']['type']['operator'] = $this->settings['default_filter_operator'];
 
       foreach ($value['tabs']['results']['advanced_taxonomy_wrapper'] as $wrapper_id => $wrapper) {
         $field_id = str_replace('_wrapper', '', $wrapper_id);
+        $content_type_selected = array_values($value['tabs']['results']['type_wrapper']['type']);
+        $visible_content_types = $value['tabs']['results']['advanced_taxonomy_wrapper'][$wrapper_id]['visible_types'];
+        $visible_content_type_collection = explode(",", $visible_content_types);
 
-        $config['results']['advanced_taxonomy_wrapper'][$field_id]['values'] = $this->saveFilterValues($field_id, $wrapper);
+        $visible = FALSE;
 
-        if (!empty($wrapper['operator'])) {
-          $config['results']['advanced_taxonomy_wrapper'][$field_id]['operator'] = $wrapper['operator'];
+        if (is_array($visible_content_type_collection)) {
+          foreach ($visible_content_type_collection as $visible_type) {
+            if (in_array($visible_type, $content_type_selected, TRUE)) {
+              $visible = TRUE;
+              continue;
+            }
+          }
+        } else {
+          if (in_array($visible_content_type_collection, $content_type_selected, TRUE)) {
+            $visible = TRUE;
+          }
+        }
+
+        if ($visible === TRUE) {
+          $config['results']['advanced_taxonomy_wrapper'][$field_id]['values'] = $this->saveFilterValues($field_id, $wrapper);
+
+          if (!empty($wrapper['operator'])) {
+            $config['results']['advanced_taxonomy_wrapper'][$field_id]['operator'] = $wrapper['operator'];
+          }
+        } else {
+          $config['results']['advanced_taxonomy_wrapper'][$field_id]['values'] = [];
         }
 
         if (empty($config['results']['advanced_taxonomy_wrapper'][$field_id]['values'])) {
@@ -650,16 +717,38 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
         if (isset($value['tabs']['results'][$wrapper_id])) {
           $wrapper = $value['tabs']['results'][$wrapper_id];
           $field_id = str_replace('_wrapper', '', $wrapper_id);
+          $content_type_selected = array_values($value['tabs']['results']['type_wrapper']['type']);
+          $visible_content_types = $value['tabs']['results'][$wrapper_id]['visible_types'];
+          $visible_content_type_collection = explode(",", $visible_content_types);
 
-          $config['results'][$field_id]['values'] = $this->saveFilterValues($field_id, $wrapper);
+          $visible = FALSE;
 
-          if (!empty($wrapper['operator'])) {
-            $config['results'][$field_id]['operator'] = $wrapper['operator'];
+          if (is_array($visible_content_type_collection)) {
+            foreach ($visible_content_type_collection as $visible_type) {
+              if (in_array($visible_type, $content_type_selected, TRUE)) {
+                $visible = TRUE;
+                continue;
+              }
+            }
+          } else {
+            if (in_array($visible_content_type_collection, $content_type_selected, TRUE)) {
+              $visible = TRUE;
+            }
           }
-        }
 
-        if (empty($config['results'][$field_id]) && empty($config['results'][$field_id]['values'])) {
-          $config['results'][$field_id] = [];
+          if ($visible === TRUE) {
+            $config['results'][$field_id]['values'] = $this->saveFilterValues($field_id, $wrapper);
+
+            if (!empty($wrapper['operator'])) {
+              $config['results'][$field_id]['operator'] = $wrapper['operator'];
+            }
+          } else {
+            $config['results'][$field_id]['values'] = [];
+          }
+
+          if (empty($config['results'][$field_id]['values'])) {
+            unset($config['results'][$field_id]);
+          }
         }
       }
 
@@ -708,6 +797,17 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
   }
 
   /**
+   * @param $value
+   * @return array
+   */
+  protected function buildHiddenValueStates($value) {
+    return [
+      '#type' => 'hidden',
+      '#value' => implode(",", $value),
+    ];
+  }
+
+  /**
    * Build a filter operator select element.
    *
    * @param string $default_value
@@ -730,7 +830,8 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
       ]
     ];
 
-    if ($this->fieldDefinition->getFieldStorageDefinition()->getSetting('expose_filter_operator') == FALSE) {
+
+    if ($this->settings['expose_filter_operator'] == FALSE) {
       $element['#access'] = FALSE;
     }
 
@@ -744,7 +845,16 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
    *   The reference fields.
    */
   protected function getEntityReferenceFields() {
-    $reference_fields = $this->indexHelper->getIndexEntityReferenceFields($this->index, ['nid', 'uid']);
+    $excluded_fields = ['nid'];
+    if (isset($this->settings['excluded_fields']) && !empty($this->settings['excluded_fields'])) {
+      if (strpos($this->settings['excluded_fields'], ',') !== FALSE) {
+        $excluded_fields = array_merge($excluded_fields, explode(',', $this->settings['excluded_fields']));
+      } else {
+        $excluded_fields = array_merge($excluded_fields, [$this->settings['excluded_fields']]);
+      }
+    }
+
+    $reference_fields = $this->indexHelper->getIndexEntityReferenceFields($this->index, $excluded_fields);
     $fields = [];
     $top_fields = ['field_topic', 'field_tags'];
     foreach ($top_fields as $field_id) {
@@ -803,7 +913,7 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
     $configuration['display']['type'] = $configuration['display']['type'] ?? 'grid';
     $configuration['display']['items_per_page'] = $configuration['display']['items_per_page'] ?? 9;
 
-    $configuration['filter_operator'] = $configuration['filter_operator'] ?? $this->fieldDefinition->getFieldStorageDefinition()->getSetting('default_filter_operator');
+    $configuration['filter_operator'] = $configuration['filter_operator'] ?? $this->settings['default_filter_operator'];
 
     $configuration['results'] = $configuration['results'] ?? [];
 
