@@ -30,12 +30,6 @@ class AutomatedListingConfigurationEnhancer extends ResourceFieldEnhancerBase {
   protected function setDefaultKeys() {
     $configuration = [];
     $configuration['content_type'] = '';
-    $configuration['display']['items'] = 1;
-    $configuration['sort']['field'] = '';
-    $configuration['sort']['direction'] = '';
-    $configuration['results']['min_not_met'] = 'hide';
-    $configuration['results']['no_results_message'] = '';
-    $configuration['filters'] = [];
 
     return $configuration;
   }
@@ -51,55 +45,8 @@ class AutomatedListingConfigurationEnhancer extends ResourceFieldEnhancerBase {
 
     $configuration = array_merge($this->setDefaultKeys(), $configuration);
 
-    if (isset($configuration['results']['type'])) {
-      $configuration['filters']['type'] = $configuration['results']['type'];
-
-      if (isset($configuration['results']['type']['values'])) {
-        $configuration['content_type'] = $configuration['results']['type']['values'];
-      }
-
-      unset($configuration['results']['type']);
-    }
-
-    if (isset($configuration['results']['field_topic'])) {
-      $configuration['filters']['field_topic'] = $configuration['results']['field_topic'];
-      unset($configuration['results']['field_topic']);
-    }
-
-    if (isset($configuration['results']['field_tags'])) {
-      $configuration['filters']['field_tags'] = $configuration['results']['field_tags'];
-      unset($configuration['results']['field_tags']);
-    }
-
-    if (isset($configuration['results']['advanced_taxonomy_wrapper'])) {
-      $advanced_taxonomy_wrapper = array_merge($configuration['filters'], $configuration['results']['advanced_taxonomy_wrapper']);
-      $configuration['filters'] = $advanced_taxonomy_wrapper;
-      unset($configuration['results']['advanced_taxonomy_wrapper']);
-    }
-
-    if (isset($configuration['display']['items_per_page'])) {
-      $configuration['display']['items'] = $configuration['display']['items_per_page'];
-      unset($configuration['display']['items_per_page']);
-    }
-
-    if (isset($configuration['display']['sort_by'])) {
-      $configuration['sort']['field'] = $configuration['display']['sort_by'];
-      unset($configuration['display']['sort_by']);
-    }
-
-    if (isset($configuration['display']['sort_direction'])) {
-      $configuration['sort']['direction'] = $configuration['display']['sort_direction'];
-      unset($configuration['display']['sort_direction']);
-    }
-
-    if (isset($configuration['display']['min_not_met'])) {
-      $configuration['results']['min_not_met'] = $configuration['display']['min_not_met'];
-      unset($configuration['display']['min_not_met']);
-    }
-
-    if (isset($configuration['display']['no_results_message'])) {
-      $configuration['results']['no_results_message'] = $configuration['display']['no_results_message'];
-      unset($configuration['display']['no_results_message']);
+    if (isset($configuration['filters']['type']['values'])) {
+      $configuration['content_type'] = $configuration['filters']['type']['values'];
     }
 
     return $configuration;
