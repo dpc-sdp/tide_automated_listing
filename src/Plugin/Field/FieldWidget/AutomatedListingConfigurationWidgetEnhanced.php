@@ -470,14 +470,6 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
         }
       }
 
-      $advanced_taxonomy_wrapper_visibility = [];
-
-      foreach ($contentTypesDefinitions as $key => $value) {
-        $advanced_taxonomy_wrapper_visibility[] = [
-          ':input[name="' . $this->getFormStatesElementName('tabs|results|type_wrapper|type', $items, $delta, $element) . '[' . $key . ']' . '"]' => ['checked' => TRUE],
-        ];
-      }
-
       $element['tabs']['results']['advanced_taxonomy_wrapper'] = [
         '#type' => 'details',
         '#title' => $this->t('Advanced Taxonomies'),
@@ -512,9 +504,9 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
             foreach ($contentTypesDefinitions as $key => $value) {
               foreach ($value as $item) {
                 if (strpos($field_settings['path'], $item) !== FALSE) {
-                  $visible = array_merge($visible, [
+                  $visible[] = [
                     ':input[name="' . $this->getFormStatesElementName('tabs|results|type_wrapper|type', $items, $delta, $element) . '[' . $key . ']' . '"]' => ['checked' => TRUE],
-                  ]);
+                  ];
                   $visible_content_types[] = $key;
                   continue;
                 }
