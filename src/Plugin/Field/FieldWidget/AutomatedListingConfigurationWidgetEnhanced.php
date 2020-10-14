@@ -634,7 +634,7 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
     foreach ($values as $delta => &$value) {
       $config = [];
       $config['index'] = $this->fieldDefinition->getFieldStorageDefinition()->getSetting('index');
-      $config['results']['min'] = (int) $value['tabs']['display']['min'] ?? 0;
+      $config['results']['min'] = (int) $value['tabs']['display']['min'] ?? 1;
       $config['results']['max'] = 0;
       $config['results']['min_not_met'] = $value['tabs']['display']['min_not_met'] ?? 'hide';
       $config['results']['no_results_message'] = $value['tabs']['display']['no_results_message'] ?? $this->t('There are currently now results');
@@ -885,7 +885,7 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
    *   The configuration.
    */
   protected function getDefaultConfiguration($configuration) {
-    $configuration['results']['min'] = $configuration['results']['min'] ?? 0;
+    $configuration['results']['min'] = $configuration['results']['min'] ?? 1;
     $configuration['results']['max'] = 0;
     $configuration['results']['min_not_met'] = $configuration['results']['min_not_met'] ?? 'hide';
     $configuration['results']['no_results_message'] = $configuration['results']['no_results_message'] ?? '';
