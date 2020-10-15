@@ -231,7 +231,7 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
   protected function buildDisplaySettingsTab(FieldItemListInterface $items, $delta, array &$element, array &$form, FormStateInterface $form_state, array $configuration = NULL) {
     $element['tabs']['display'] = [
       '#type' => 'details',
-      '#title' => $this->t('Display options'),
+      '#title' => $this->t('Layout options'),
       '#open' => TRUE,
       '#collapsible' => TRUE,
       '#group_name' => 'display'
@@ -239,7 +239,7 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
 
     $element['tabs']['display']['type'] = [
       '#type' => 'radios',
-      '#title' => $this->t('Display as'),
+      '#title' => $this->t('Display cards as'),
       '#options' => [
         'grid' => $this->t('Grid'),
         'carousel' => $this->t('Carousel'),
@@ -249,14 +249,15 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
 
     $element['tabs']['display']['min'] = [
       '#type' => 'number',
-      '#title' => $this->t('Minimum results to show'),
+      '#title' => $this->t('Minimum number of cards to display'),
+      '#description' => $this->t('You can specify a minimum number of content cards that must be available (meet your listing criteria), before the list appears on a page.'),
       '#default_value' => $configuration['results']['min'] ?? 1,
       '#min' => 1,
     ];
 
     $element['tabs']['display']['min_not_met'] = [
       '#type' => 'radios',
-      '#title' => $this->t('If minimum count is not met'),
+      '#title' => $this->t('If minimum results aren\'t available'),
       '#options' => [
         'hide' => $this->t('Hide component'),
         'no_results_message' => $this->t("Show 'no results' message"),
@@ -286,7 +287,7 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
       '#title' => $this->t('Number of cards shown per page'),
       '#default_value' => $configuration['display']['items_per_page'] ?? 9,
       '#min' => 0,
-      '#description' => $this->t('Enter \'0\' to show all results on one page'),
+      '#description' => $this->t('Enter \'0\' to show all results on one page. You can limit the number of cards from a filitered list that appear on a landing page. Once the number of cards you have specified for 1 page is met, the listing will paginate (show multiple pages) for the additional card results.'),
     ];
 
     $default_sort_by = '';
@@ -297,7 +298,7 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
 
     $element['tabs']['display']['sort_by'] = [
       '#type' => 'select',
-      '#title' => $this->t('Sort by'),
+      '#title' => $this->t('Sort by a date filter'),
       '#default_value' => $default_sort_by,
       '#options' => ['' => $this->t('- No sort -')] + $date_fields,
     ];
@@ -375,7 +376,7 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
   protected function buildResultsSettingsTab(FieldItemListInterface $items, $delta, array &$element, array &$form, FormStateInterface $form_state, array $configuration = NULL) {
     $element['tabs']['results'] = [
       '#type' => 'details',
-      '#title' => $this->t('Listing results'),
+      '#title' => $this->t('Collection results'),
       '#open' => TRUE,
       '#collapsible' => TRUE,
       '#group_name' => 'results',
@@ -395,11 +396,11 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
 
       $element['tabs']['results']['type_wrapper']['type'] = [
         '#type' => 'checkboxes',
-        '#title' => $this->t('Show content type'),
+        '#title' => $this->t('Select the content type(s) you\'d like to display'),
         '#options' => $this->indexHelper->getNodeTypes(),
         '#default_value' => $configuration['filters']['type']['values'] ?? [],
         '#required' => TRUE,
-        '#description' => $this->t('Select the content type you would like to show in your collection')
+        '#description' => $this->t('You can select more than 1 content type to display in your list of cards.')
       ];
 
       if (isset($configuration['filters']['type']['values']) && empty($configuration['filters']['type']['values'])) {
@@ -449,8 +450,8 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
             }
 
             $element['tabs']['results'][$field_id . '_wrapper']['#title'] = ($field_id == 'field_topic') ? $this->t('Topic') : $this->t('Tags');
-            $element['tabs']['results'][$field_id . '_wrapper'][$field_id]['#title'] = ($field_id == 'field_topic') ? $this->t('Select topics') : $this->t('Select tags');
-            $element['tabs']['results'][$field_id . '_wrapper'][$field_id]['#description'] = ($field_id == 'field_topic') ? $this->t('Separate multiple topics with comma') : $this->t('Separate multiple tags with comma');
+            $element['tabs']['results'][$field_id . '_wrapper'][$field_id]['#title'] = ($field_id == 'field_topic') ? $this->t('Select topics to show') : $this->t('Select tags to show ');
+            $element['tabs']['results'][$field_id . '_wrapper'][$field_id]['#description'] = ($field_id == 'field_topic') ? $this->t('Start typing a topic from our list of topics, for example Business (https://www.vic.gov.au/create-new-content-page#mandatory-fields-landing-page).') : $this->t('Start typing tags for audience groups. Find a list of tags (https://www.singledigitalpresence.vic.gov.au/create-new-content-page#mandatory-fields-landing-page)');
             if (isset($configuration['filters'][$field_id]['values']) && empty($configuration['filters'][$field_id]['values'])) {
               $element['tabs']['results'][$field_id . '_wrapper']['#open'] = FALSE;
             }
@@ -571,8 +572,8 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
     $date_fields = $this->indexHelper->getIndexDateFields($this->index);
     $element['tabs']['results']['today'] = [
       '#type' => 'details',
-      '#title' => $this->t('Filter from today for Event-like content types'),
-      '#description' => $this->t('This filter is only enabled when there is a valid field mapping for both Start Date and End Date. Both Start Date and End Date can be mapped to the same date field.'),
+      '#title' => $this->t('Filters for content types that include dates'),
+      '#description' => $this->t('You can apply more filters to Event, Grant, Family violence recommendations and Publications content, if a Start date and End date has been included.'),
       '#open' => TRUE,
       '#collapsible' => TRUE,
       '#group_name' => 'filters_today',
@@ -585,7 +586,7 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
 
     $element['tabs']['results']['today']['status'] = [
       '#type' => 'checkbox',
-      '#title' => $this->t('Enable this filter'),
+      '#title' => $this->t('Enable date filter'),
       '#default_value' => $configuration['filter_today']['status'] ?? FALSE,
     ];
     $default_filter_today_start_date = $configuration['filter_today']['start_date'] ?? 'field_event_date_start_value';
@@ -615,7 +616,7 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
     ];
     $element['tabs']['results']['today']['criteria'] = [
       '#type' => 'select',
-      '#title' => $this->t('Criteria'),
+      '#title' => $this->t('Select the date filter for your collection'),
       '#default_value' => $configuration['filter_today']['criteria'] ?? 'upcoming',
       '#options' => [
         'all' => $this->t('All dates'),

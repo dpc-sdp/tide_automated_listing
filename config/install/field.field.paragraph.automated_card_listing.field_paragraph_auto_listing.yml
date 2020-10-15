@@ -10,7 +10,7 @@ id: paragraph.automated_card_listing.field_paragraph_auto_listing
 field_name: field_paragraph_auto_listing
 entity_type: paragraph
 bundle: automated_card_listing
-label: 'Listing Configuration'
+label: 'Content list display'
 description: ''
 required: false
 translatable: false
