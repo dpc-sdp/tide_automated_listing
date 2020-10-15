@@ -263,6 +263,7 @@ class SearchApiIndexHelper {
       '#autocreate' => FALSE,
       '#default_value' => [],
     ];
+    $element['#selection_settings']['match_limit'] = 20;
     if (!empty($bundles)) {
       $element['#selection_settings']['target_bundles'] = $bundles;
     }
