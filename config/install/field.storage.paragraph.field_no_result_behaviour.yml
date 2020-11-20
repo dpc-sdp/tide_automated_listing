@@ -1,0 +1,26 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - options
+    - paragraphs
+id: paragraph.field_no_result_behaviour
+field_name: field_no_result_behaviour
+entity_type: paragraph
+type: list_string
+settings:
+  allowed_values:
+    -
+      value: hide
+      label: 'Hide component'
+    -
+      value: no_results_message
+      label: 'Show ''no results'' message'
+  allowed_values_function: ''
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

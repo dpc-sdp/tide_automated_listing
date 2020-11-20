@@ -1,0 +1,22 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_listing_display_type
+    - paragraphs.paragraphs_type.automated_card_listing
+  module:
+    - options
+id: paragraph.automated_card_listing.field_listing_display_type
+field_name: field_listing_display_type
+entity_type: paragraph
+bundle: automated_card_listing
+label: 'Display as'
+description: ''
+required: true
+translatable: false
+default_value:
+  -
+    value: grid
+default_value_callback: ''
+settings: {  }
+field_type: list_string

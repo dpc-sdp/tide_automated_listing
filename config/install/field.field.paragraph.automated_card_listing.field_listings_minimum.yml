@@ -1,0 +1,22 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_listings_minimum
+    - paragraphs.paragraphs_type.automated_card_listing
+id: paragraph.automated_card_listing.field_listings_minimum
+field_name: field_listings_minimum
+entity_type: paragraph
+bundle: automated_card_listing
+label: 'Minimum number of cards to display'
+description: 'You can specify a minimum number of content cards that must be available (meet your listing criteria), before the list appears on a page.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: 1
+  max: 100
+  prefix: ''
+  suffix: ''
+field_type: integer

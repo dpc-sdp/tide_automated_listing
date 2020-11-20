@@ -161,17 +161,6 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
   public function formElement(FieldItemListInterface $items, $delta, array $element, array &$form, FormStateInterface $form_state) {
     $element = parent::formElement($items, $delta, $element, $form, $form_state);
 
-    // Added theme wrapper to combine all the fields.
-    $element['#theme_wrappers'] = [
-      'details' => [
-        '#title' => $element['#title'],
-        '#attributes' => [
-          'open' => 'open',
-        ],
-        '#summary_attributes' => [],
-        '#required' => TRUE,
-      ],
-    ];
     // Hide the YAML configuration field.
     $element['value']['#access'] = FALSE;
 
@@ -200,12 +189,6 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
     $configuration = $items[$delta]->configuration ?? [];
     $configuration = $this->getDefaultConfiguration($configuration);
 
-    $element['tabs'] = [
-      '#type' => 'horizontal_tabs',
-      '#group_name' => 'tabs',
-    ];
-    $element['#attached']['library'][] = 'field_group/formatter.horizontal_tabs';
-
     $this->buildResultsSettingsTab($items, $delta, $element, $form, $form_state, $configuration);
     $this->buildDisplaySettingsTab($items, $delta, $element, $form, $form_state, $configuration);
 
@@ -229,80 +212,19 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
    *   The YAML configuration of the listing.
    */
   protected function buildDisplaySettingsTab(FieldItemListInterface $items, $delta, array &$element, array &$form, FormStateInterface $form_state, array $configuration = NULL) {
-    $element['tabs']['display'] = [
-      '#type' => 'details',
-      '#title' => $this->t('Layout options'),
-      '#open' => TRUE,
-      '#collapsible' => TRUE,
-      '#group_name' => 'display'
-    ];
-
-    $element['tabs']['display']['type'] = [
-      '#type' => 'radios',
-      '#title' => $this->t('Display cards as'),
-      '#options' => [
-        'grid' => $this->t('Grid'),
-        'carousel' => $this->t('Carousel'),
-      ],
-      '#default_value' => $configuration['display']['type'] ?? 'grid',
-    ];
-
-    $element['tabs']['display']['min'] = [
-      '#type' => 'number',
-      '#title' => $this->t('Minimum number of cards to display'),
-      '#description' => $this->t('You can specify a minimum number of content cards that must be available (meet your listing criteria), before the list appears on a page.'),
-      '#default_value' => $configuration['results']['min'] ?? 1,
-      '#min' => 1,
-    ];
-
-    $element['tabs']['display']['min_not_met'] = [
-      '#type' => 'radios',
-      '#title' => $this->t('If minimum results aren\'t available'),
-      '#options' => [
-        'hide' => $this->t('Hide component'),
-        'no_results_message' => $this->t("Show 'no results' message"),
-      ],
-      '#default_value' => $configuration['results']['min_not_met'] ?? 'hide',
-    ];
-
-    $no_result_message = $this->t('There are currently no results');
-
-    if (!empty($configuration['results']['no_results_message'])) {
-      $no_result_message = $configuration['results']['no_results_message'];
-    }
-
-    $element['tabs']['display']['no_results_message'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t("'No results' message"),
-      '#default_value' => $no_result_message,
-      '#states' => [
-        'invisible' => [
-          ':input[name="' . $this->getFormStatesElementName('tabs|display|min_not_met', $items, $delta, $element) . '"]' => ['value' => 'hide'],
-        ],
-      ],
-    ];
-
-    $element['tabs']['display']['items_per_page'] = [
-      '#type' => 'number',
-      '#title' => $this->t('Number of cards shown per page'),
-      '#default_value' => $configuration['display']['items_per_page'] ?? 9,
-      '#min' => 0,
-      '#description' => $this->t('Enter \'0\' to show all results on one page. You can limit the number of cards from a filitered list that appear on a landing page. Once the number of cards you have specified for 1 page is met, the listing will paginate (show multiple pages) for the additional card results.'),
-    ];
-
     $default_sort_by = '';
     $date_fields = $this->indexHelper->getIndexDateFields($this->index);
     if (!empty($configuration['sort']['field']) && !empty($date_fields[$configuration['sort']['field']])) {
       $default_sort_by = $configuration['sort']['field'];
     }
 
-    $element['tabs']['display']['sort_by'] = [
+    $element['sort_by'] = [
       '#type' => 'select',
       '#title' => $this->t('Sort by a date filter'),
       '#default_value' => $default_sort_by,
       '#options' => ['' => $this->t('- No sort -')] + $date_fields,
     ];
-    $element['tabs']['display']['sort_direction'] = [
+    $element['sort_direction'] = [
       '#type' => 'select',
       '#title' => $this->t('Sort order'),
       '#default_value' => $configuration['sort']['direction'] ?? 'desc',
@@ -313,10 +235,10 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
     ];
 
     if ($this->indexHelper->isNodeStickyIndexedAsInteger($this->index)) {
-      $element['tabs']['display']['sort_with_sticky'] = [
+      $element['sort_with_sticky'] = [
         '#type' => 'checkbox',
         '#title' => $this->t("Consider 'Sticky at top of lists' option"),
-        '#default_value' => $configuration['display']['sort_with_sticky'] ?? FALSE,
+        '#default_value' => $configuration['sort_with_sticky'] ?? FALSE,
         '#description' => $this->t('If this option is selected, all other sorting criteria will be secondary to the stickied content.'),
       ];
     }
@@ -326,7 +248,7 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
     if (!empty($configuration['card_display']['date']) && !empty($date_fields[$configuration['card_display']['date']])) {
       $default_card_date = $configuration['card_display']['date'];
     }
-    $element['tabs']['display']['card_date'] = [
+    $element['card_date'] = [
       '#type' => 'select',
       '#title' => $this->t('Card Date field mapping'),
       '#default_value' => $default_card_date,
@@ -334,10 +256,10 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
     ];
 
     if ($this->settings['expose_filter_operator'] == FALSE) {
-      $element['tabs']['display']['card_date']['#access'] = FALSE;
+      $element['card_date']['#access'] = FALSE;
     }
 
-    $element['tabs']['display']['card_display_hide'] = [
+    $element['card_display_hide'] = [
       '#type' => 'checkboxes',
       '#title' => $this->t('Hide the following fields on the card'),
       '#default_value' => !empty($configuration['card_display']['hide']) ? array_keys(array_filter($configuration['card_display']['hide'])) : [],
@@ -352,7 +274,7 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
 
 
     if ($this->settings['expose_filter_operator'] == FALSE) {
-      $element['tabs']['display']['card_display_hide']['#access'] = FALSE;
+      $element['card_display_hide']['#access'] = FALSE;
     }
 
   }
@@ -374,27 +296,11 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
    *   The YAML configuration of the listing.
    */
   protected function buildResultsSettingsTab(FieldItemListInterface $items, $delta, array &$element, array &$form, FormStateInterface $form_state, array $configuration = NULL) {
-    $element['tabs']['results'] = [
-      '#type' => 'details',
-      '#title' => $this->t('Collection results'),
-      '#open' => TRUE,
-      '#collapsible' => TRUE,
-      '#group_name' => 'results',
-    ];
-
-    $element['tabs']['results']['operator'] = $this->buildFilterOperatorSelect($configuration['filter_operator'] ?? $this->settings['default_filter_operator'], $this->t('This operator is used to combined the filters together.'));
+    $element['operator'] = $this->buildFilterOperatorSelect($configuration['filter_operator'] ?? $this->settings['default_filter_operator'], $this->t('This operator is used to combined the filters together.'));
 
     // Content type filter.
     if ($this->indexHelper->isNodeTypeIndexed($this->index)) {
-      $element['tabs']['results']['type_wrapper'] = [
-        '#type' => 'details',
-        '#title' => $this->t('Content type'),
-        '#open' => TRUE,
-        '#collapsible' => TRUE,
-        '#group_name' => 'filters_type_wrapper',
-      ];
-
-      $element['tabs']['results']['type_wrapper']['type'] = [
+      $element['type'] = [
         '#type' => 'checkboxes',
         '#title' => $this->t('Select the content type(s) you\'d like to display'),
         '#options' => $this->indexHelper->getNodeTypes(),
@@ -402,10 +308,6 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
         '#required' => TRUE,
         '#description' => $this->t('You can select more than 1 content type to display in your list of cards.')
       ];
-
-      if (isset($configuration['filters']['type']['values']) && empty($configuration['filters']['type']['values'])) {
-        $element['tabs']['results']['type_wrapper']['#open'] = FALSE;
-      }
     }
 
     // Generate all entity reference filters.
@@ -434,29 +336,29 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
           $default_values = $configuration['filters'][$field_id]['values'] ?? [];
           $field_filter = $this->indexHelper->buildEntityReferenceFieldFilter($this->index, $field_id, $default_values);
           if ($field_filter) {
-            $element['tabs']['results'][$field_id . '_wrapper'] = [
+            $element[$field_id . '_wrapper'] = [
               '#type' => 'details',
               '#title' => $field_settings['label'],
               '#open' => FALSE,
               '#collapsible' => TRUE,
               '#group_name' => 'filters_' . $field_id . '_wrapper',
             ];
-            $element['tabs']['results'][$field_id . '_wrapper'][$field_id] = $field_filter;
+            $element[$field_id . '_wrapper'][$field_id] = $field_filter;
 
-            $element['tabs']['results'][$field_id . '_wrapper']['operator'] = $this->buildFilterOperatorSelect($configuration['filters'][$field_id]['operator'] ?? $this->settings['default_filter_operator'], $this->t('This filter operator is used to combined all the selected values together.'));
+            $element[$field_id . '_wrapper']['operator'] = $this->buildFilterOperatorSelect($configuration['filters'][$field_id]['operator'] ?? $this->settings['default_filter_operator'], $this->t('This filter operator is used to combined all the selected values together.'));
 
             if (isset($configuration['filters'][$field_id])) {
-              $element['tabs']['results'][$field_id . '_wrapper']['#open'] = TRUE;
+              $element[$field_id . '_wrapper']['#open'] = TRUE;
             }
 
-            $element['tabs']['results'][$field_id . '_wrapper']['#title'] = ($field_id == 'field_topic') ? $this->t('Topic') : $this->t('Tags');
-            $element['tabs']['results'][$field_id . '_wrapper'][$field_id]['#title'] = ($field_id == 'field_topic') ? $this->t('Select topics to show') : $this->t('Select tags to show ');
-            $element['tabs']['results'][$field_id . '_wrapper'][$field_id]['#description'] = ($field_id == 'field_topic') ? $this->t('Start typing a topic from our list of topics, for example Business (https://www.vic.gov.au/create-new-content-page#mandatory-fields-landing-page).') : $this->t('Start typing tags for audience groups. Find a list of tags (https://www.singledigitalpresence.vic.gov.au/create-new-content-page#mandatory-fields-landing-page)');
+            $element[$field_id . '_wrapper']['#title'] = ($field_id == 'field_topic') ? $this->t('Topic') : $this->t('Tags');
+            $element[$field_id . '_wrapper'][$field_id]['#title'] = ($field_id == 'field_topic') ? $this->t('Select topics to show') : $this->t('Select tags to show ');
+            $element[$field_id . '_wrapper'][$field_id]['#description'] = ($field_id == 'field_topic') ? $this->t('Start typing a topic from our list of topics, for example Business (https://www.vic.gov.au/create-new-content-page#mandatory-fields-landing-page).') : $this->t('Start typing tags for audience groups. Find a list of tags (https://www.singledigitalpresence.vic.gov.au/create-new-content-page#mandatory-fields-landing-page)');
             if (isset($configuration['filters'][$field_id]['values']) && empty($configuration['filters'][$field_id]['values'])) {
-              $element['tabs']['results'][$field_id . '_wrapper']['#open'] = FALSE;
+              $element[$field_id . '_wrapper']['#open'] = FALSE;
             }
             else {
-              $element['tabs']['results'][$field_id . '_wrapper']['#open'] = TRUE;
+              $element[$field_id . '_wrapper']['#open'] = TRUE;
             }
 
             $visible_content_types = [];
@@ -466,12 +368,12 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
               }
             }
 
-            $element['tabs']['results'][$field_id . '_wrapper']['visible_types'] = $this->buildHiddenValueStates($visible_content_types);
+            $element[$field_id . '_wrapper']['visible_types'] = $this->buildHiddenValueStates($visible_content_types);
           }
         }
       }
 
-      $element['tabs']['results']['advanced_taxonomy_wrapper'] = [
+      $element['advanced_taxonomy_wrapper'] = [
         '#type' => 'details',
         '#title' => $this->t('Advanced Taxonomies'),
         '#open' => TRUE,
@@ -484,19 +386,19 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
           $default_values = $configuration['filters'][$field_id]['values'] ?? [];
           $field_filter = $this->indexHelper->buildEntityReferenceFieldFilter($this->index, $field_id, $default_values);
           if ($field_filter) {
-            $element['tabs']['results']['advanced_taxonomy_wrapper'][$field_id . '_wrapper'] = [
+            $element['advanced_taxonomy_wrapper'][$field_id . '_wrapper'] = [
               '#type' => 'details',
               '#title' => $field_settings['label'],
               '#open' => FALSE,
               '#collapsible' => TRUE,
               '#group_name' => 'filters_' . $field_id . '_wrapper',
             ];
-            $element['tabs']['results']['advanced_taxonomy_wrapper'][$field_id . '_wrapper'][$field_id] = $field_filter;
+            $element['advanced_taxonomy_wrapper'][$field_id . '_wrapper'][$field_id] = $field_filter;
 
-            $element['tabs']['results']['advanced_taxonomy_wrapper'][$field_id . '_wrapper']['operator'] = $this->buildFilterOperatorSelect($configuration['filters'][$field_id]['operator'] ?? $this->settings['default_filter_operator'], $this->t('This filter operator is used to combined all the selected values together.'));
+            $element['advanced_taxonomy_wrapper'][$field_id . '_wrapper']['operator'] = $this->buildFilterOperatorSelect($configuration['filters'][$field_id]['operator'] ?? $this->settings['default_filter_operator'], $this->t('This filter operator is used to combined all the selected values together.'));
 
             if (isset($configuration['filters'][$field_id])) {
-              $element['tabs']['results']['advanced_taxonomy_wrapper'][$field_id . '_wrapper']['#open'] = TRUE;
+              $element['advanced_taxonomy_wrapper'][$field_id . '_wrapper']['#open'] = TRUE;
             }
 
             $visible = [];
@@ -506,7 +408,7 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
               foreach ($value as $item) {
                 if (strpos($field_settings['path'], $item) !== FALSE) {
                   $visible[] = [
-                    ':input[name="' . $this->getFormStatesElementName('tabs|results|type_wrapper|type', $items, $delta, $element) . '[' . $key . ']' . '"]' => ['checked' => TRUE],
+                    ':input[name="' . $this->getFormStatesElementName('type', $items, $delta, $element) . '[' . $key . ']' . '"]' => ['checked' => TRUE],
                   ];
                   $visible_content_types[] = $key;
                   continue;
@@ -514,12 +416,12 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
               }
             }
 
-            $element['tabs']['results']['advanced_taxonomy_wrapper'][$field_id . '_wrapper']['visible_types'] = $this->buildHiddenValueStates($visible_content_types);
+            $element['advanced_taxonomy_wrapper'][$field_id . '_wrapper']['visible_types'] = $this->buildHiddenValueStates($visible_content_types);
 
             if (!empty($visible)) {
-              $element['tabs']['results']['advanced_taxonomy_wrapper'][$field_id . '_wrapper']['#states']['visible'] = $visible;
+              $element['advanced_taxonomy_wrapper'][$field_id . '_wrapper']['#states']['visible'] = $visible;
             } else {
-              $element['tabs']['results']['advanced_taxonomy_wrapper'][$field_id . '_wrapper']['#access'] = FALSE;
+              $element['advanced_taxonomy_wrapper'][$field_id . '_wrapper']['#access'] = FALSE;
             }
           }
         }
@@ -547,22 +449,22 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
         }
         $index_field = $this->index->getField($field_id);
         if ($index_field) {
-          $element['tabs']['results'][$field_id . '_wrapper'] = [
+          $element[$field_id . '_wrapper'] = [
             '#type' => 'details',
             '#title' => $index_field->getLabel(),
             '#open' => FALSE,
             '#collapsible' => TRUE,
             '#group_name' => 'results' . $field_id . '_wrapper',
           ];
-          $element['tabs']['results'][$field_id . '_wrapper'][$field_id] = $field_filter;
+          $element[$field_id . '_wrapper'][$field_id] = $field_filter;
 
           if (empty($field_filter['#disable_filter_operator'])) {
-            $element['tabs']['results'][$field_id . '_wrapper']['operator'] = $this->buildFilterOperatorSelect($configuration['filters'][$field_id]['operator'] ?? $this->settings['default_filter_operator']);
+            $element[$field_id . '_wrapper']['operator'] = $this->buildFilterOperatorSelect($configuration['filters'][$field_id]['operator'] ?? $this->settings['default_filter_operator']);
           }
 
           unset($field_filter['#disable_filter_operator']);
           if (isset($configuration['filters'][$field_id]['values'])) {
-            $element['tabs']['results'][$field_id . '_wrapper']['#open'] = TRUE;
+            $element[$field_id . '_wrapper']['#open'] = TRUE;
           }
         }
       }
@@ -570,7 +472,7 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
 
     // Today filter.
     $date_fields = $this->indexHelper->getIndexDateFields($this->index);
-    $element['tabs']['results']['today'] = [
+    $element['today'] = [
       '#type' => 'details',
       '#title' => $this->t('Filters for content types that include dates'),
       '#description' => $this->t('You can apply more filters to Event, Grant, Family violence recommendations and Publications content, if a Start date and End date has been included.'),
@@ -579,12 +481,12 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
       '#group_name' => 'filters_today',
       '#states' => [
         'invisible' => [
-          ':input[name="' . $this->getFormStatesElementName('tabs|results|type_wrapper|type', $items, $delta, $element) . '"]' => ['value' => '']
+          ':input[name="' . $this->getFormStatesElementName('type', $items, $delta, $element) . '"]' => ['value' => '']
         ]
       ],
     ];
 
-    $element['tabs']['results']['today']['status'] = [
+    $element['today']['status'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Enable date filter'),
       '#default_value' => $configuration['filter_today']['status'] ?? FALSE,
@@ -598,23 +500,23 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
       $default_filter_today_end_date = '';
     }
     if (isset($configuration['filter_today']['status']) && empty($configuration['filter_today']['status'])) {
-      $element['tabs']['results']['today']['#open'] = FALSE;
+      $element['today']['#open'] = FALSE;
     }
 
-    $element['tabs']['results']['today']['start_date'] = [
+    $element['today']['start_date'] = [
       '#type' => 'select',
       '#title' => $this->t('Start Date'),
       '#default_value' => $default_filter_today_start_date,
       '#options' => ['' => $this->t('- No mapping -')] + $date_fields,
     ];
 
-    $element['tabs']['results']['today']['end_date'] = [
+    $element['today']['end_date'] = [
       '#type' => 'select',
       '#title' => $this->t('End Date'),
       '#default_value' => $default_filter_today_end_date,
       '#options' => ['' => $this->t('- No mapping -')] + $date_fields,
     ];
-    $element['tabs']['results']['today']['criteria'] = [
+    $element['today']['criteria'] = [
       '#type' => 'select',
       '#title' => $this->t('Select the date filter for your collection'),
       '#default_value' => $configuration['filter_today']['criteria'] ?? 'upcoming',
@@ -635,32 +537,44 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
     foreach ($values as $delta => &$value) {
       $config = [];
       $config['index'] = $this->fieldDefinition->getFieldStorageDefinition()->getSetting('index');
-      $config['results']['min'] = (int) $value['tabs']['display']['min'] ?? 1;
-      $config['results']['max'] = 0;
-      $config['results']['min_not_met'] = $value['tabs']['display']['min_not_met'] ?? 'hide';
-      $config['results']['no_results_message'] = $value['tabs']['display']['no_results_message'] ?? $this->t('There are currently now results');
-      $config['display']['type'] = $value['tabs']['display']['type'] ?? 'grid';
-      $config['display']['items_per_page'] = (int) $value['tabs']['display']['items_per_page'] ?? 0;
-      $config['card_display']['date'] = $value['tabs']['display']['card_date'] ?? '';
 
+      /** Deprecated Fields Start */
+      $min = 1;
+      if (isset($value['min'])) {
+        $min = (int) $value['min'];
+      }
+      $config['min'] = $min;
+      $config['max'] = 0;
+      $config['min_not_met'] = $value['min_not_met'] ?? 'hide';
+      $config['no_results_message'] = $value['no_results_message'] ?? $this->t('There are currently now results');
+      $config['type'] = $value['type'] ?? 'grid';
+
+      $items_per_page = 0;
+      if (isset($value['items_per_page'])) {
+        $items_per_page = (int) $value['items_per_page'];
+      }
+      $config['items_per_page'] = $items_per_page;
+      /** Deprecated Fields End */
+
+      $config['card_display']['date'] = $value['card_date'] ?? '';
       $card_fields = ['image', 'title', 'summary', 'topic', 'location'];
       foreach ($card_fields as $card_field) {
-        $config['card_display']['hide'][$card_field] = !empty($value['tabs']['display']['card_display_hide'][$card_field]) ? TRUE : FALSE;
+        $config['card_display']['hide'][$card_field] = !empty($value['card_display_hide'][$card_field]) ? TRUE : FALSE;
       }
 
-      $config['filter_operator'] = $value['tabs']['results']['operator'] ?? $this->settings['default_filter_operator'];
-      $config['filter_today']['status'] = (bool) $value['tabs']['results']['today']['status'] ?? FALSE;
-      $config['filter_today']['start_date'] = $value['tabs']['results']['today']['start_date'] ?? '';
-      $config['filter_today']['end_date'] = $value['tabs']['results']['today']['end_date'] ?? '';
-      $config['filter_today']['criteria'] = $value['tabs']['results']['today']['criteria'] ?? 'upcoming';
+      $config['filter_operator'] = $value['operator'] ?? $this->settings['default_filter_operator'];
+      $config['filter_today']['status'] = (bool) $value['today']['status'] ?? FALSE;
+      $config['filter_today']['start_date'] = $value['today']['start_date'] ?? '';
+      $config['filter_today']['end_date'] = $value['today']['end_date'] ?? '';
+      $config['filter_today']['criteria'] = $value['today']['criteria'] ?? 'upcoming';
 
-      $config['filters']['type']['values'] = $value['tabs']['results']['type_wrapper']['type'] ? array_values(array_filter($value['tabs']['results']['type_wrapper']['type'])) : [];
+      $config['filters']['type']['values'] = $value['type'] ? array_values(array_filter($value['type'])) : [];
       $config['filters']['type']['operator'] = 'OR';
 
-      foreach ($value['tabs']['results']['advanced_taxonomy_wrapper'] as $wrapper_id => $wrapper) {
+      foreach ($value['advanced_taxonomy_wrapper'] as $wrapper_id => $wrapper) {
         $field_id = str_replace('_wrapper', '', $wrapper_id);
-        $content_type_selected = array_values($value['tabs']['results']['type_wrapper']['type']);
-        $visible_content_types = $value['tabs']['results']['advanced_taxonomy_wrapper'][$wrapper_id]['visible_types'];
+        $content_type_selected = array_values($value['type']);
+        $visible_content_types = $value['advanced_taxonomy_wrapper'][$wrapper_id]['visible_types'];
         $visible_content_type_collection = explode(",", $visible_content_types);
 
         $visible = FALSE;
@@ -694,11 +608,11 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
       }
 
       foreach (['field_topic_wrapper', 'field_tags_wrapper'] as $wrapper_id) {
-        if (isset($value['tabs']['results'][$wrapper_id])) {
-          $wrapper = $value['tabs']['results'][$wrapper_id];
+        if (isset($value[$wrapper_id])) {
+          $wrapper = $value[$wrapper_id];
           $field_id = str_replace('_wrapper', '', $wrapper_id);
-          $content_type_selected = array_values($value['tabs']['results']['type_wrapper']['type']);
-          $visible_content_types = $value['tabs']['results'][$wrapper_id]['visible_types'];
+          $content_type_selected = array_values($value['type']);
+          $visible_content_types = $value[$wrapper_id]['visible_types'];
           $visible_content_type_collection = explode(",", $visible_content_types);
 
           $visible = FALSE;
@@ -732,12 +646,13 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
         }
       }
 
-      $config['sort']['field'] = $value['tabs']['display']['sort_by'] ?? '';
-      $config['sort']['direction'] = $value['tabs']['display']['sort_direction'] ?? 'desc';
+      $config['sort']['field'] = $value['sort_by'] ?? '';
+      $config['sort']['direction'] = $value['sort_direction'] ?? 'desc';
 
-      if (isset($value['tabs']['display']['sort_with_sticky'])) {
-        $config['sort']['sort_with_sticky'] = (boolean) $value['tabs']['display']['sort_with_sticky'] ?? FALSE;
+      if (isset($value['sort_with_sticky'])) {
+        $config['sort']['sort_with_sticky'] = (boolean) $value['sort_with_sticky'] ?? FALSE;
       }
+
       $value['value'] = Yaml::encode($config);
     }
 
@@ -886,13 +801,13 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
    *   The configuration.
    */
   protected function getDefaultConfiguration($configuration) {
-    $configuration['results']['min'] = $configuration['results']['min'] ?? 1;
-    $configuration['results']['max'] = 0;
-    $configuration['results']['min_not_met'] = $configuration['results']['min_not_met'] ?? 'hide';
-    $configuration['results']['no_results_message'] = $configuration['results']['no_results_message'] ?? '';
+    $configuration['min'] = $configuration['min'] ?? 1;
+    $configuration['max'] = 0;
+    $configuration['min_not_met'] = $configuration['min_not_met'] ?? 'hide';
+    $configuration['no_results_message'] = $configuration['no_results_message'] ?? '';
 
-    $configuration['display']['type'] = $configuration['display']['type'] ?? 'grid';
-    $configuration['display']['items_per_page'] = $configuration['display']['items_per_page'] ?? 9;
+    $configuration['type'] = $configuration['type'] ?? 'grid';
+    $configuration['items_per_page'] = $configuration['items_per_page'] ?? 9;
 
     $configuration['filter_operator'] = $configuration['filter_operator'] ?? $this->settings['default_filter_operator'];
 
