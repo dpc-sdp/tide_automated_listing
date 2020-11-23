@@ -546,7 +546,7 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
       $config['min'] = $min;
       $config['max'] = 0;
       $config['min_not_met'] = $value['min_not_met'] ?? 'hide';
-      $config['no_results_message'] = $value['no_results_message'] ?? $this->t('There are currently now results');
+      $config['no_results_message'] = $value['no_results_message'] ?? 'There are currently now results';
       $config['type'] = $value['type'] ?? 'grid';
 
       $items_per_page = 0;
