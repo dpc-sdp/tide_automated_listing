@@ -61,11 +61,13 @@ function tide_automated_listing_update_8003() {
     'field.storage.paragraph.field_listings_per_page' => 'field_storage_config',
     'field.storage.paragraph.field_no_result_behaviour' => 'field_storage_config',
     'field.storage.paragraph.field_no_results_message' => 'field_storage_config',
+    'field.storage.paragraph.field_paragraph_description' => 'field_storage_config',
     'field.field.paragraph.automated_card_listing.field_listing_display_type' => 'field_config',
     'field.field.paragraph.automated_card_listing.field_listings_minimum' => 'field_config',
     'field.field.paragraph.automated_card_listing.field_listings_per_page' => 'field_config',
     'field.field.paragraph.automated_card_listing.field_no_result_behaviour' => 'field_config',
     'field.field.paragraph.automated_card_listing.field_no_results_message' => 'field_config',
+    'field.field.paragraph.automated_card_listing.field_paragraph_description' => 'field_config',
   ];
   module_load_include('inc', 'tide_core', 'includes/helpers');
   $config_location = [drupal_get_path('module', 'tide_automated_listing') . '/config/install'];
@@ -118,8 +120,8 @@ function tide_automated_listing_update_8004() {
     'field_group' => [
       'group_card_collection' => [
         'children' => [
-            'group_automated_card',
-            'group_layout_options'
+          'group_automated_card',
+          'group_layout_options'
         ],
         'parent_name' => '',
         'weight' => 2,
