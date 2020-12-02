@@ -11,6 +11,7 @@ dependencies:
     - field.field.paragraph.automated_card_listing.field_paragraph_cta
     - field.field.paragraph.automated_card_listing.field_paragraph_cta_text
     - field.field.paragraph.automated_card_listing.field_paragraph_title
+    - field.field.paragraph.automated_card_listing.field_paragraph_description
     - paragraphs.paragraphs_type.automated_card_listing
   module:
     - tide_automated_listing
@@ -41,5 +42,6 @@ hidden:
   field_no_result_behaviour: true
   field_no_results_message: true
   field_paragraph_cta: true
+  field_paragraph_description: true
   field_paragraph_cta_text: true
   search_api_excerpt: true

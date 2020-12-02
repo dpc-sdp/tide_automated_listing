@@ -12,6 +12,7 @@ dependencies:
     - field.field.paragraph.automated_card_listing.field_paragraph_cta
     - field.field.paragraph.automated_card_listing.field_paragraph_cta_text
     - field.field.paragraph.automated_card_listing.field_paragraph_title
+    - field.field.paragraph.automated_card_listing.field_paragraph_description
     - paragraphs.paragraphs_type.automated_card_listing
 id: paragraph.automated_card_listing.preview
 targetEntityType: paragraph
@@ -35,4 +36,5 @@ hidden:
   field_paragraph_auto_listing: true
   field_paragraph_cta: true
   field_paragraph_cta_text: true
+  field_paragraph_description: true
   search_api_excerpt: true
