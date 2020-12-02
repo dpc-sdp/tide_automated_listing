@@ -78,6 +78,9 @@ function tide_automated_listing_update_8003() {
     $config_entity = $storage->createFromStorageRecord($config_read);
     $config_entity->save();
   }
+
+  tide_automated_listing_update_8005();
+  tide_automated_listing_update_8006();
 }
 
 /**

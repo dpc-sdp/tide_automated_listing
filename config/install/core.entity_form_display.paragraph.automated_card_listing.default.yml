@@ -11,11 +11,13 @@ dependencies:
     - field.field.paragraph.automated_card_listing.field_paragraph_cta
     - field.field.paragraph.automated_card_listing.field_paragraph_cta_text
     - field.field.paragraph.automated_card_listing.field_paragraph_title
+    - field.field.paragraph.automated_card_listing.field_paragraph_description
     - paragraphs.paragraphs_type.automated_card_listing
   module:
     - field_group
     - tide_automated_listing
     - tide_core
+    - maxlength
 third_party_settings:
   field_group:
     group_card_collection:
@@ -119,6 +121,19 @@ content:
       size: 60
       placeholder: ''
     third_party_settings: {  }
+    type: string_textfield
+    region: content
+  field_paragraph_description:
+    weight: 1
+    settings:
+      rows: 5
+      placeholder: ''
+    third_party_settings:
+      maxlength:
+        maxlength_js: 200
+        maxlength_js_label: 'Content limited to @limit characters, remaining: <strong>@remaining</strong>'
+        maxlength_js_enforce: false
+        maxlength_js_truncate_html: false
     type: string_textfield
     region: content
 hidden:
