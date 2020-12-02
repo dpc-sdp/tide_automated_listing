@@ -305,7 +305,7 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
         '#title' => $this->t('Select the content type(s) you\'d like to display'),
         '#options' => $this->indexHelper->getNodeTypes(),
         '#default_value' => $configuration['filters']['type']['values'] ?? [],
-        '#required' => TRUE,
+        '#required' => FALSE,
         '#description' => $this->t('You can select more than 1 content type to display in your list of cards.')
       ];
     }

@@ -82,234 +82,245 @@ function tide_automated_listing_update_8003() {
  * Add new fields to tide_automated_listing to entity form default.
  */
 function tide_automated_listing_update_8004() {
-  /** @var \Drupal\Core\Extension\ModuleHandlerInterface $moduleHandler */
-  $moduleHandler = \Drupal::service('module_handler');
+  $config_factory = \Drupal::configFactory();
+  $config = $config_factory->getEditable('core.entity_form_display.paragraph.automated_card_listing.default');
 
-  // Add the Automated Listing paragraph to Landing Page component if exists.
-  if ($moduleHandler->moduleExists('tide_automated_listing')) {
-    $config_factory = \Drupal::configFactory();
-    $config = $config_factory->getEditable('core.entity_form_display.paragraph.automated_card_listing.default');
+  $dependencies_settings = $config->get('dependencies');
+  $dependency_fields = [
+    'field.field.paragraph.automated_card_listing.field_listing_display_type',
+    'field.field.paragraph.automated_card_listing.field_listings_minimum',
+    'field.field.paragraph.automated_card_listing.field_listings_per_page',
+    'field.field.paragraph.automated_card_listing.field_no_result_behaviour',
+    'field.field.paragraph.automated_card_listing.field_no_results_message',
+    'field.field.paragraph.automated_card_listing.field_paragraph_description',
+  ];
 
-    $dependencies_settings = $config->get('dependencies');
-    $dependency_fields = [
-      'field.field.paragraph.automated_card_listing.field_listing_display_type',
-      'field.field.paragraph.automated_card_listing.field_listings_minimum',
-      'field.field.paragraph.automated_card_listing.field_listings_per_page',
-      'field.field.paragraph.automated_card_listing.field_no_result_behaviour',
-      'field.field.paragraph.automated_card_listing.field_no_results_message',
-    ];
-
-    foreach ($dependency_fields as $field) {
-      if (!in_array($field, $dependencies_settings['config'])) {
-        $dependencies_settings['config'][] = $field;
-      }
+  foreach ($dependency_fields as $field) {
+    if (!in_array($field, $dependencies_settings['config'])) {
+      $dependencies_settings['config'][] = $field;
     }
-
-    $dependency_modules = [
-      'tide_core',
-      'field_group',
-    ];
-
-    foreach ($dependency_modules as $module) {
-      if (!in_array($field, $dependencies_settings['module'])) {
-        $dependencies_settings['module'][] = $module;
-      }
-    }
-    $config->set('dependencies', $dependencies_settings);
-
-    $config->set('third_party_settings', [
-      'field_group' => [
-        'group_card_collection' => [
-          'children' => [
-              'group_automated_card',
-              'group_layout_options'
-          ],
-          'parent_name' => '',
-          'weight' => 2,
-          'format_type' => 'tabs',
-          'region' => 'content',
-          'format_settings' => [
-            'id' => '',
-            'classes' => '',
-            'direction' => 'horizontal',
-          ],
-          'label' => 'Card Collection',
-        ],
-        'group_automated_card' => [
-          'children' => [
-            'field_paragraph_auto_listing',
-          ],
-          'parent_name' => 'group_card_collection',
-          'weight' => 21,
-          'format_type' => 'tab',
-          'region' => 'content',
-          'format_settings' => [
-            'description' => '',
-            'formatter' => 'closed',
-            'id' => '',
-            'classes' => '',
-            'required_fields' => FALSE,
-          ],
-          'label' => 'Automated Cards',
-        ],
-        'group_layout_options' => [
-          'children' => [
-            'field_listing_display_type',
-            'field_listings_minimum',
-            'field_no_result_behaviour',
-            'field_no_results_message',
-            'field_listings_per_page',
-          ],
-          'parent_name' => 'group_card_collection',
-          'weight' => 22,
-          'format_type' => 'tab',
-          'region' => 'content',
-          'format_settings' => [
-            'description' => '',
-            'formatter' => 'closed',
-            'id' => '',
-            'classes' => '',
-            'required_fields' => FALSE,
-          ],
-          'label' => 'Layout Options',
-        ],
-      ]
-    ]);
-
-    $content = $config->get('content');
-    if (!isset($content['field_listing_display_type'])) {
-      $content['field_listing_display_type'] = [
-        'weight' => 8,
-        'settings' => [],
-        'third_party_settings' => [],
-        'type' => 'options_buttons',
-        'region' => 'content',
-      ];
-    }
-    if (!isset($content['field_listings_minimum'])) {
-      $content['field_listings_minimum'] = [
-        'weight' => 9,
-        'settings' => [
-          'placeholder' => '',
-        ],
-        'third_party_settings' => [],
-        'type' => 'number',
-        'region' => 'content',
-      ];
-    }
-    if (!isset($content['field_listings_per_page'])) {
-      $content['field_listings_per_page'] = [
-        'weight' => 12,
-        'settings' => [
-          'placeholder' => '',
-        ],
-        'third_party_settings' => [],
-        'type' => 'number',
-        'region' => 'content',
-      ];
-    }
-    if (!isset($content['field_no_result_behaviour'])) {
-      $content['field_no_result_behaviour'] = [
-        'weight' => 10,
-        'settings' => [],
-        'third_party_settings' => [],
-        'type' => 'options_buttons',
-        'region' => 'content',
-      ];
-    }
-    if (!isset($content['field_no_results_message'])) {
-      $content['field_no_results_message'] = [
-        'weight' => 11,
-        'settings' => [
-          'size' => 60,
-          'placeholder' => '',
-        ],
-        'third_party_settings' => [],
-        'type' => 'string_textfield',
-        'region' => 'content',
-      ];
-    }
-    if (isset($content['field_paragraph_auto_listing'])) {
-      $content['field_paragraph_auto_listing'] = [
-        'weight' => 1,
-        'settings' => [
-          'rows' => '5',
-          'placeholder' => '',
-          'expose_filter_operator' => 0,
-          'default_filter_operator' => 'OR',
-          'excluded_fields' => 'uid'
-        ],
-        'third_party_settings' => [],
-        'type' => 'automated_listing_configuration_enhanced',
-        'region' => 'content'
-      ];
-    }
-    if (isset($content['field_paragraph_cta'])) {
-      unset($content['field_paragraph_cta']);
-    }
-    if (isset($content['field_paragraph_cta_text'])) {
-      unset($content['field_paragraph_cta_text']);
-    }
-    $config->set('content', $content);
-
-    $hidden = $config->get('hidden');
-    if (!isset($hidden['field_paragraph_cta'])) {
-      $hidden['field_paragraph_cta'] = TRUE;
-    }
-    if (!isset($hidden['field_paragraph_cta_text'])) {
-      $hidden['field_paragraph_cta_text'] = TRUE;
-    }
-    $config->set('hidden', $hidden);
-
-    $config->save();
   }
+
+  $dependency_modules = [
+    'tide_core',
+    'field_group',
+    'maxlength'
+  ];
+
+  foreach ($dependency_modules as $module) {
+    if (!in_array($field, $dependencies_settings['module'])) {
+      $dependencies_settings['module'][] = $module;
+    }
+  }
+  $config->set('dependencies', $dependencies_settings);
+
+  $config->set('third_party_settings', [
+    'field_group' => [
+      'group_card_collection' => [
+        'children' => [
+            'group_automated_card',
+            'group_layout_options'
+        ],
+        'parent_name' => '',
+        'weight' => 2,
+        'format_type' => 'tabs',
+        'region' => 'content',
+        'format_settings' => [
+          'id' => '',
+          'classes' => '',
+          'direction' => 'horizontal',
+        ],
+        'label' => 'Card Collection',
+      ],
+      'group_automated_card' => [
+        'children' => [
+          'field_paragraph_auto_listing',
+        ],
+        'parent_name' => 'group_card_collection',
+        'weight' => 21,
+        'format_type' => 'tab',
+        'region' => 'content',
+        'format_settings' => [
+          'description' => '',
+          'formatter' => 'closed',
+          'id' => '',
+          'classes' => '',
+          'required_fields' => FALSE,
+        ],
+        'label' => 'Automated Cards',
+      ],
+      'group_layout_options' => [
+        'children' => [
+          'field_listing_display_type',
+          'field_listings_minimum',
+          'field_no_result_behaviour',
+          'field_no_results_message',
+          'field_listings_per_page',
+        ],
+        'parent_name' => 'group_card_collection',
+        'weight' => 22,
+        'format_type' => 'tab',
+        'region' => 'content',
+        'format_settings' => [
+          'description' => '',
+          'formatter' => 'closed',
+          'id' => '',
+          'classes' => '',
+          'required_fields' => FALSE,
+        ],
+        'label' => 'Layout Options',
+      ],
+    ]
+  ]);
+
+  $content = $config->get('content');
+  if (!isset($content['field_listing_display_type'])) {
+    $content['field_listing_display_type'] = [
+      'weight' => 8,
+      'settings' => [],
+      'third_party_settings' => [],
+      'type' => 'options_buttons',
+      'region' => 'content',
+    ];
+  }
+  if (!isset($content['field_listings_minimum'])) {
+    $content['field_listings_minimum'] = [
+      'weight' => 9,
+      'settings' => [
+        'placeholder' => '',
+      ],
+      'third_party_settings' => [],
+      'type' => 'number',
+      'region' => 'content',
+    ];
+  }
+  if (!isset($content['field_listings_per_page'])) {
+    $content['field_listings_per_page'] = [
+      'weight' => 12,
+      'settings' => [
+        'placeholder' => '',
+      ],
+      'third_party_settings' => [],
+      'type' => 'number',
+      'region' => 'content',
+    ];
+  }
+  if (!isset($content['field_no_result_behaviour'])) {
+    $content['field_no_result_behaviour'] = [
+      'weight' => 10,
+      'settings' => [],
+      'third_party_settings' => [],
+      'type' => 'options_buttons',
+      'region' => 'content',
+    ];
+  }
+  if (!isset($content['field_no_results_message'])) {
+    $content['field_no_results_message'] = [
+      'weight' => 11,
+      'settings' => [
+        'size' => 60,
+        'placeholder' => '',
+      ],
+      'third_party_settings' => [],
+      'type' => 'string_textfield',
+      'region' => 'content',
+    ];
+  }
+  if (!isset($content['field_paragraph_description'])) {
+    $content['field_paragraph_description'] = [
+      'weight' => 1,
+      'settings' => [
+        'rows' => 5,
+        'placeholder' => '',
+      ],
+      'third_party_settings' => [
+        'maxlength' => [
+          'maxlength_js' => 200,
+          'maxlength_js_label' => 'Content limited to @limit characters, remaining: <strong>@remaining</strong>',
+          'maxlength_js_enforce' => FALSE,
+          'maxlength_js_truncate_html' => FALSE,
+        ],
+      ],
+      'type' => 'string_textarea',
+      'region' => 'content',
+    ];
+  }
+  if (isset($content['field_paragraph_auto_listing'])) {
+    $content['field_paragraph_auto_listing'] = [
+      'weight' => 1,
+      'settings' => [
+        'rows' => '5',
+        'placeholder' => '',
+        'expose_filter_operator' => 0,
+        'default_filter_operator' => 'OR',
+        'excluded_fields' => 'uid'
+      ],
+      'third_party_settings' => [],
+      'type' => 'automated_listing_configuration_enhanced',
+      'region' => 'content'
+    ];
+  }
+  if (isset($content['field_paragraph_cta'])) {
+    unset($content['field_paragraph_cta']);
+  }
+  if (isset($content['field_paragraph_cta_text'])) {
+    unset($content['field_paragraph_cta_text']);
+  }
+  $config->set('content', $content);
+
+  $hidden = $config->get('hidden');
+  if (!isset($hidden['field_paragraph_cta'])) {
+    $hidden['field_paragraph_cta'] = TRUE;
+  }
+  if (!isset($hidden['field_paragraph_cta_text'])) {
+    $hidden['field_paragraph_cta_text'] = TRUE;
+  }
+  $config->set('hidden', $hidden);
+
+  $config->save();
 }
 
 /**
  * Add new fields to tide_automated_listing to entity view default.
  */
 function tide_automated_listing_update_8005() {
-  /** @var \Drupal\Core\Extension\ModuleHandlerInterface $moduleHandler */
-  $moduleHandler = \Drupal::service('module_handler');
+  $config_factory = \Drupal::configFactory();
+  $config = $config_factory->getEditable('core.entity_view_display.paragraph.automated_card_listing.default');
 
-  // Add the Automated Listing paragraph to Landing Page component if exists.
-  if ($moduleHandler->moduleExists('tide_automated_listing')) {
-    $config_factory = \Drupal::configFactory();
-    $config = $config_factory->getEditable('core.entity_view_display.paragraph.automated_card_listing.default');
+  $dependencies_settings = $config->get('dependencies');
+  $dependency_fields = [
+    'field.field.paragraph.automated_card_listing.field_listing_display_type',
+    'field.field.paragraph.automated_card_listing.field_listings_minimum',
+    'field.field.paragraph.automated_card_listing.field_listings_per_page',
+    'field.field.paragraph.automated_card_listing.field_no_result_behaviour',
+    'field.field.paragraph.automated_card_listing.field_no_results_message',
+    'field.field.paragraph.automated_card_listing.field_paragraph_description',
+  ];
 
-    $dependencies_settings = $config->get('dependencies');
-    $dependency_fields = [
-      'field.field.paragraph.automated_card_listing.field_listing_display_type',
-      'field.field.paragraph.automated_card_listing.field_listings_minimum',
-      'field.field.paragraph.automated_card_listing.field_listings_per_page',
-      'field.field.paragraph.automated_card_listing.field_no_result_behaviour',
-      'field.field.paragraph.automated_card_listing.field_no_results_message',
-    ];
-
-    foreach ($dependency_fields as $field) {
-      if (!in_array($field, $dependencies_settings['config'])) {
-        $dependencies_settings['config'][] = $field;
-      }
+  foreach ($dependency_fields as $field) {
+    if (!in_array($field, $dependencies_settings['config'])) {
+      $dependencies_settings['config'][] = $field;
     }
-    $config->set('dependencies', $dependencies_settings);
-
-    $hidden = $config->get('hidden');
-    $hidden_fields = [
-      'field_listing_display_type',
-      'field_listings_minimum',
-      'field_listings_per_page',
-      'field_no_result_behaviour',
-      'field_no_results_message',
-    ];
-    foreach ($hidden_fields as $field) {
-      if (!isset($hidden[$field])) {
-        $hidden[$field] = TRUE;
-      }
-    }
-    $config->set('hidden', $hidden);
-
-    $config->save();
   }
+  $config->set('dependencies', $dependencies_settings);
+
+  $hidden = $config->get('hidden');
+  $hidden_fields = [
+    'field_listing_display_type',
+    'field_listings_minimum',
+    'field_listings_per_page',
+    'field_no_result_behaviour',
+    'field_no_results_message',
+    'field_paragraph_description',
+  ];
+  foreach ($hidden_fields as $field) {
+    if (!isset($hidden[$field])) {
+      $hidden[$field] = TRUE;
+    }
+  }
+  $config->set('hidden', $hidden);
+
+  $config->save();
 }
 
 /**
@@ -331,6 +342,7 @@ function tide_automated_listing_update_8006() {
       'field.field.paragraph.automated_card_listing.field_listings_per_page',
       'field.field.paragraph.automated_card_listing.field_no_result_behaviour',
       'field.field.paragraph.automated_card_listing.field_no_results_message',
+      'field.field.paragraph.automated_card_listing.field_paragraph_description',
     ];
 
     foreach ($dependency_fields as $field) {
@@ -347,6 +359,7 @@ function tide_automated_listing_update_8006() {
       'field_listings_per_page',
       'field_no_result_behaviour',
       'field_no_results_message',
+      'field_paragraph_description',
     ];
     foreach ($hidden_fields as $field) {
       if (!isset($hidden[$field])) {
