@@ -17,7 +17,7 @@ use Drupal\Core\TypedData\TypedDataInterface;
  *   label = @Translation("Automated Card Listing Configuration"),
  *   description = @Translation("A field containing YAML configuration for automated card listing."),
  *   category = @Translation("Automated Card Listing"),
- *   default_widget = "automated_listing_configuration",
+ *   default_widget = "automated_listing_configuration_enhanced",
  *   default_formatter = "automated_listing_configuration",
  * )
  */
@@ -68,8 +68,8 @@ class AutomatedListingConfiguration extends StringLongItem {
    */
   public static function defaultStorageSettings() {
     return [
-      'index' => 'node',
-    ] + parent::defaultStorageSettings();
+        'index' => 'node',
+      ] + parent::defaultStorageSettings();
   }
 
   /**

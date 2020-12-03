@@ -4,29 +4,3 @@
  * @file
  * Tide Automated Listing component.
  */
-
-use Drupal\field\Entity\FieldConfig;
-
-/**
- * Implements hook_entity_bundle_create().
- */
-function tide_automated_listing_entity_bundle_create($entity_type_id, $bundle) {
-  if ($entity_type_id == 'paragraph' && $bundle == 'automated_card_listing') {
-    try {
-      $field_config = FieldConfig::loadByName('node', 'landing_page', 'field_landing_page_component');
-      if (!empty($field_config)) {
-        $handler_settings = $field_config->getSetting('handler_settings');
-        $handler_settings['target_bundles']['automated_card_listing'] = 'automated_card_listing';
-        $handler_settings['target_bundles_drag_drop']['automated_card_listing'] = [
-          'enabled' => TRUE,
-          'weight' => 99,
-        ];
-        $field_config->setSetting('handler_settings', $handler_settings);
-        $field_config->save();
-      }
-    }
-    catch (\Exception $exception) {
-      watchdog_exception('tide_automated_listing', $exception);
-    }
-  }
-}

@@ -1,0 +1,22 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_no_result_behaviour
+    - paragraphs.paragraphs_type.automated_card_listing
+  module:
+    - options
+id: paragraph.automated_card_listing.field_no_result_behaviour
+field_name: field_no_result_behaviour
+entity_type: paragraph
+bundle: automated_card_listing
+label: 'If minimum results aren''t available'
+description: ''
+required: true
+translatable: false
+default_value:
+  -
+    value: hide
+default_value_callback: ''
+settings: {  }
+field_type: list_string

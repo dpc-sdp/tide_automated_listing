@@ -3,10 +3,16 @@ status: true
 dependencies:
   config:
     - core.entity_view_mode.paragraph.preview
+    - field.field.paragraph.automated_card_listing.field_listing_display_type
+    - field.field.paragraph.automated_card_listing.field_listings_minimum
+    - field.field.paragraph.automated_card_listing.field_listings_per_page
+    - field.field.paragraph.automated_card_listing.field_no_result_behaviour
+    - field.field.paragraph.automated_card_listing.field_no_results_message
     - field.field.paragraph.automated_card_listing.field_paragraph_auto_listing
     - field.field.paragraph.automated_card_listing.field_paragraph_cta
     - field.field.paragraph.automated_card_listing.field_paragraph_cta_text
     - field.field.paragraph.automated_card_listing.field_paragraph_title
+    - field.field.paragraph.automated_card_listing.field_paragraph_description
     - paragraphs.paragraphs_type.automated_card_listing
 id: paragraph.automated_card_listing.preview
 targetEntityType: paragraph
@@ -22,7 +28,13 @@ content:
     type: string
     region: content
 hidden:
+  field_listing_display_type: true
+  field_listings_minimum: true
+  field_listings_per_page: true
+  field_no_result_behaviour: true
+  field_no_results_message: true
   field_paragraph_auto_listing: true
   field_paragraph_cta: true
   field_paragraph_cta_text: true
+  field_paragraph_description: true
   search_api_excerpt: true

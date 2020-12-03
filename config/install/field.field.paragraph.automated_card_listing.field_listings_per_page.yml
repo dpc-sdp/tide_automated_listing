@@ -1,0 +1,22 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_listings_per_page
+    - paragraphs.paragraphs_type.automated_card_listing
+id: paragraph.automated_card_listing.field_listings_per_page
+field_name: field_listings_per_page
+entity_type: paragraph
+bundle: automated_card_listing
+label: 'Number of cards shown per page'
+description: 'Enter ''0'' to show all results on one page. You can limit the number of cards from a filitered list that appear on a landing page. Once the number of cards you have specified for 1 page is met, the listing will paginate (show multiple pages) for the additional card results.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: 0
+  max: 9
+  prefix: ''
+  suffix: ''
+field_type: integer

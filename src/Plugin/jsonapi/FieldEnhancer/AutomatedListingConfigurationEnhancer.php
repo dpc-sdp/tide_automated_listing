@@ -27,6 +27,13 @@ class AutomatedListingConfigurationEnhancer extends ResourceFieldEnhancerBase {
     return \Drupal::service('tide_automated_listing.sapi_index_helper');
   }
 
+  protected function setDefaultKeys() {
+    $configuration = [];
+    $configuration['content_type'] = '';
+
+    return $configuration;
+  }
+
   /**
    * {@inheritdoc}
    */
@@ -35,6 +42,13 @@ class AutomatedListingConfigurationEnhancer extends ResourceFieldEnhancerBase {
     if (!empty($configuration['index'])) {
       $configuration['server_index'] = static::getIndexHelper()->getServerIndexId($configuration['index']);
     }
+
+    $configuration = array_merge($this->setDefaultKeys(), $configuration);
+
+    if (isset($configuration['filters']['type']['values'])) {
+      $configuration['content_type'] = $configuration['filters']['type']['values'];
+    }
+
     return $configuration;
   }
 
