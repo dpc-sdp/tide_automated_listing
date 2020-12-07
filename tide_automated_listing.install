@@ -42,7 +42,8 @@ function tide_automated_listing_update_8002() {
                 $paragraph->save();
               }
             }
-          } catch (\Exception $exception) {
+          }
+          catch (\Exception $exception) {
             watchdog_exception('tide_automated_listing', $exception);
           }
         }

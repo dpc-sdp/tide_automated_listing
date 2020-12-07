@@ -27,6 +27,11 @@ class AutomatedListingConfigurationEnhancer extends ResourceFieldEnhancerBase {
     return \Drupal::service('tide_automated_listing.sapi_index_helper');
   }
 
+  /**
+   * Set default value for keys.
+   *
+   * @return array
+   */
   protected function setDefaultKeys() {
     $configuration = [];
     $configuration['content_type'] = '';

@@ -68,8 +68,8 @@ class AutomatedListingConfiguration extends StringLongItem {
    */
   public static function defaultStorageSettings() {
     return [
-        'index' => 'node',
-      ] + parent::defaultStorageSettings();
+      'index' => 'node',
+    ] + parent::defaultStorageSettings();
   }
 
   /**
