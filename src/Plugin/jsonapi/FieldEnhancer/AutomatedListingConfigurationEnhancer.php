@@ -28,6 +28,18 @@ class AutomatedListingConfigurationEnhancer extends ResourceFieldEnhancerBase {
   }
 
   /**
+   * Set default value for keys.
+   *
+   * @return array
+   */
+  protected function setDefaultKeys() {
+    $configuration = [];
+    $configuration['content_type'] = '';
+
+    return $configuration;
+  }
+
+  /**
    * {@inheritdoc}
    */
   protected function doUndoTransform($data, Context $context) {
@@ -35,6 +47,13 @@ class AutomatedListingConfigurationEnhancer extends ResourceFieldEnhancerBase {
     if (!empty($configuration['index'])) {
       $configuration['server_index'] = static::getIndexHelper()->getServerIndexId($configuration['index']);
     }
+
+    $configuration = array_merge($this->setDefaultKeys(), $configuration);
+
+    if (isset($configuration['filters']['type']['values'])) {
+      $configuration['content_type'] = $configuration['filters']['type']['values'];
+    }
+
     return $configuration;
   }
 

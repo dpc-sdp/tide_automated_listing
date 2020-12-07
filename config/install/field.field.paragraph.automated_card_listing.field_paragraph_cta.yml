@@ -11,14 +11,13 @@ third_party_settings:
   link_field_autocomplete_filter:
     negate: null
     allowed_content_types:
-      case_study: 0
-      event: 0
-      insight: 0
-      landing_page: 0
-      news: 0
-      page: 0
-      staff_profile: 0
-      test: 0
+      case_study: '0'
+      event: '0'
+      insight: '0'
+      landing_page: '0'
+      news: '0'
+      page: '0'
+      staff_profile: '0'
 id: paragraph.automated_card_listing.field_paragraph_cta
 field_name: field_paragraph_cta
 entity_type: paragraph

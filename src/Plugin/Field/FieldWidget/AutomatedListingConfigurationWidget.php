@@ -555,6 +555,7 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
       $config['display']['type'] = $value['tabs']['display']['type'] ?? 'carousel';
       $config['display']['items_per_page'] = (int) $value['tabs']['display']['items_per_page'] ?? 0;
       $config['card_display']['date'] = $value['tabs']['display']['card_date'] ?? '';
+
       $card_fields = ['image', 'title', 'summary', 'topic', 'location'];
       foreach ($card_fields as $card_field) {
         $config['card_display']['hide'][$card_field] = !empty($value['tabs']['display']['card_display_hide'][$card_field]) ? TRUE : FALSE;

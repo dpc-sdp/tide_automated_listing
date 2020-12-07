@@ -8,8 +8,8 @@ id: paragraph.automated_card_listing.field_paragraph_title
 field_name: field_paragraph_title
 entity_type: paragraph
 bundle: automated_card_listing
-label: 'Listing Title'
-description: ''
+label: 'Collection title'
+description: 'The listing title will display as a Heading 2 on your page.'
 required: false
 translatable: true
 default_value: {  }

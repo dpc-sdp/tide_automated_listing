@@ -6,7 +6,6 @@ core: 8.x
 dependencies:
   - dpc-sdp:tide_core
   - dpc-sdp:tide_api
-  - dpc-sdp:tide_landing_page
   - dpc-sdp:tide_search
 config_devel:
   install:
