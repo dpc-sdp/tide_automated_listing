@@ -538,23 +538,14 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
       $config = [];
       $config['index'] = $this->fieldDefinition->getFieldStorageDefinition()->getSetting('index');
 
-      /** Deprecated Fields Start */
-      $min = 1;
-      if (isset($value['min'])) {
-        $min = (int) $value['min'];
-      }
-      $config['min'] = $min;
-      $config['max'] = 0;
-      $config['min_not_met'] = $value['min_not_met'] ?? 'hide';
-      $config['no_results_message'] = $value['no_results_message'] ?? 'There are currently now results';
-      $config['type'] = $value['type'] ?? 'grid';
-
-      $items_per_page = 0;
-      if (isset($value['items_per_page'])) {
-        $items_per_page = (int) $value['items_per_page'];
-      }
-      $config['items_per_page'] = $items_per_page;
-      /** Deprecated Fields End */
+      // Deprecated Fields Start
+      $config['results']['min'] = 1;
+      $config['results']['max'] = 0;
+      $config['results']['min_not_met'] = 'hide';
+      $config['results']['no_results_message'] = 'There are currently now results';
+      $config['display']['type'] = 'grid';
+      $config['display']['items_per_page'] = 0;
+      // Deprecated Fields End
 
       $config['card_display']['date'] = $value['card_date'] ?? '';
       $card_fields = ['image', 'title', 'summary', 'topic', 'location'];
@@ -653,12 +644,19 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
         $config['sort']['sort_with_sticky'] = (boolean) $value['sort_with_sticky'] ?? FALSE;
       }
 
+      if (isset($config['type'])) {
+        unset($config['type']);
+      }
+
       $value['value'] = Yaml::encode($config);
     }
 
     return $values;
   }
 
+  /**
+   * Save filter values.
+   */
   protected function saveFilterValues($field_id, $wrapper) {
     $entity_reference_fields = $this->getEntityReferenceFields();
     $values = [];
