@@ -212,7 +212,7 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
    *   The YAML configuration of the listing.
    */
   protected function buildDisplaySettingsTab(FieldItemListInterface $items, $delta, array &$element, array &$form, FormStateInterface $form_state, array $configuration = NULL) {
-    $default_sort_by = '';
+    $default_sort_by = 'changed';
     $date_fields = $this->indexHelper->getIndexDateFields($this->index);
     if (!empty($configuration['sort']['field']) && !empty($date_fields[$configuration['sort']['field']])) {
       $default_sort_by = $configuration['sort']['field'];
