@@ -330,46 +330,72 @@ function tide_automated_listing_update_8005() {
  * Add new fields to tide_automated_listing to entity view preview.
  */
 function tide_automated_listing_update_8006() {
-  /** @var \Drupal\Core\Extension\ModuleHandlerInterface $moduleHandler */
-  $moduleHandler = \Drupal::service('module_handler');
+  $config_factory = \Drupal::configFactory();
+  $config = $config_factory->getEditable('core.entity_view_display.paragraph.automated_card_listing.preview');
 
-  // Add the Automated Listing paragraph to Landing Page component if exists.
-  if ($moduleHandler->moduleExists('tide_automated_listing')) {
+  $dependencies_settings = $config->get('dependencies');
+  $dependency_fields = [
+    'field.field.paragraph.automated_card_listing.field_listing_display_type',
+    'field.field.paragraph.automated_card_listing.field_listings_minimum',
+    'field.field.paragraph.automated_card_listing.field_listings_per_page',
+    'field.field.paragraph.automated_card_listing.field_no_result_behaviour',
+    'field.field.paragraph.automated_card_listing.field_no_results_message',
+    'field.field.paragraph.automated_card_listing.field_paragraph_description',
+  ];
+
+  foreach ($dependency_fields as $field) {
+    if (!in_array($field, $dependencies_settings['config'])) {
+      $dependencies_settings['config'][] = $field;
+    }
+  }
+  $config->set('dependencies', $dependencies_settings);
+
+  $hidden = $config->get('hidden');
+  $hidden_fields = [
+    'field_listing_display_type',
+    'field_listings_minimum',
+    'field_listings_per_page',
+    'field_no_result_behaviour',
+    'field_no_results_message',
+    'field_paragraph_description',
+  ];
+  foreach ($hidden_fields as $field) {
+    if (!isset($hidden[$field])) {
+      $hidden[$field] = TRUE;
+    }
+  }
+  $config->set('hidden', $hidden);
+
+  $config->save();
+}
+
+/**
+ * Update default values for card collection.
+ */
+function tide_automated_listing_update_8007() {
+  $fields = [
+    'field.field.paragraph.automated_card_listing.field_listing_display_type' => [
+      'default_value' => [
+        [
+          'value' => 'carousel'
+        ]
+      ]
+    ],
+    'field.field.paragraph.automated_card_listing.field_listings_per_page' => [
+      'default_value' => [
+        [
+          'value' => 9
+        ]
+      ]
+    ]
+  ];
+  foreach ($fields as $field => $values) {
     $config_factory = \Drupal::configFactory();
-    $config = $config_factory->getEditable('core.entity_view_display.paragraph.automated_card_listing.preview');
+    $config = $config_factory->getEditable($field);
 
-    $dependencies_settings = $config->get('dependencies');
-    $dependency_fields = [
-      'field.field.paragraph.automated_card_listing.field_listing_display_type',
-      'field.field.paragraph.automated_card_listing.field_listings_minimum',
-      'field.field.paragraph.automated_card_listing.field_listings_per_page',
-      'field.field.paragraph.automated_card_listing.field_no_result_behaviour',
-      'field.field.paragraph.automated_card_listing.field_no_results_message',
-      'field.field.paragraph.automated_card_listing.field_paragraph_description',
-    ];
-
-    foreach ($dependency_fields as $field) {
-      if (!in_array($field, $dependencies_settings['config'])) {
-        $dependencies_settings['config'][] = $field;
-      }
+    foreach ($values as $key => $value) {
+      $config->set($key, $value);
     }
-    $config->set('dependencies', $dependencies_settings);
-
-    $hidden = $config->get('hidden');
-    $hidden_fields = [
-      'field_listing_display_type',
-      'field_listings_minimum',
-      'field_listings_per_page',
-      'field_no_result_behaviour',
-      'field_no_results_message',
-      'field_paragraph_description',
-    ];
-    foreach ($hidden_fields as $field) {
-      if (!isset($hidden[$field])) {
-        $hidden[$field] = TRUE;
-      }
-    }
-    $config->set('hidden', $hidden);
 
     $config->save();
   }
