@@ -376,12 +376,16 @@ function tide_automated_listing_update_8007() {
   $fields = [
     'field.field.paragraph.automated_card_listing.field_listing_display_type' => [
       'default_value' => [
-        'value' => 'carousel'
+        [
+          'value' => 'carousel'
+        ]
       ]
     ],
     'field.field.paragraph.automated_card_listing.field_listings_per_page' => [
       'default_value' => [
-        'value' => 9
+        [
+          'value' => 9
+        ]
       ]
     ]
   ];
