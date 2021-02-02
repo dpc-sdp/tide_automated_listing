@@ -12,7 +12,9 @@ label: 'Number of cards shown per page'
 description: 'Enter ''0'' to show all results on one page. You can limit the number of cards from a filitered list that appear on a landing page. Once the number of cards you have specified for 1 page is met, the listing will paginate (show multiple pages) for the additional card results.'
 required: false
 translatable: false
-default_value: {  }
+default_value:
+  -
+    value: 9
 default_value_callback: ''
 settings:
   min: 0
