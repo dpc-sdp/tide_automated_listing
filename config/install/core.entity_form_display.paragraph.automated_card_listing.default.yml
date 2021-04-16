@@ -111,7 +111,7 @@ content:
       placeholder: ''
       expose_filter_operator: 0
       default_filter_operator: OR
-      excluded_fields: uid
+      excluded_fields: uid,type
     third_party_settings: {  }
     type: automated_listing_configuration_enhanced
     region: content
