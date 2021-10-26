@@ -551,7 +551,7 @@ class AutomatedListingConfigurationWidget extends StringTextareaWidget implement
       $config['results']['min'] = (int) $value['tabs']['results']['min'] ?? 0;
       $config['results']['max'] = (int) $value['tabs']['results']['max'] ?? 0;
       $config['results']['min_not_met'] = $value['tabs']['results']['min_not_met'] ?? 'hide';
-      $config['results']['no_results_message'] = $value['tabs']['results']['no_results_message'] ?? $this->t('There are currently now results');
+      $config['results']['no_results_message'] = $value['tabs']['results']['no_results_message'] ?? $this->t('There are currently no results');
       $config['display']['type'] = $value['tabs']['display']['type'] ?? 'carousel';
       $config['display']['items_per_page'] = (int) $value['tabs']['display']['items_per_page'] ?? 0;
       $config['card_display']['date'] = $value['tabs']['display']['card_date'] ?? '';

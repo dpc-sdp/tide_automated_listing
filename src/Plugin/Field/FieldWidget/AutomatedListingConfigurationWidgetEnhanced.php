@@ -542,7 +542,7 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
       $config['results']['min'] = 1;
       $config['results']['max'] = 0;
       $config['results']['min_not_met'] = 'hide';
-      $config['results']['no_results_message'] = 'There are currently now results';
+      $config['results']['no_results_message'] = 'There are currently no results';
       $config['display']['type'] = 'grid';
       $config['display']['items_per_page'] = 0;
       // Deprecated Fields End
