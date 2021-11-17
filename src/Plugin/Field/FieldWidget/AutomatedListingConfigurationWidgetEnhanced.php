@@ -363,7 +363,7 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
 
             $visible_content_types = [];
             foreach ($contentTypesDefinitions as $key => $value) {
-              if (in_array($field_id, $value)) {
+              if (in_array($field_id, $value) && !in_array($key, $visible_content_types)) {
                 $visible_content_types[] = $key;
               }
             }
@@ -403,15 +403,18 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
 
             $visible = [];
             $visible_content_types = [];
+            $excluded_items = $this->getExcludedFields();
 
             foreach ($contentTypesDefinitions as $key => $value) {
               foreach ($value as $item) {
-                if (strpos($field_settings['path'], $item) !== FALSE) {
-                  $visible[] = [
-                    ':input[name="' . $this->getFormStatesElementName('type', $items, $delta, $element) . '[' . $key . ']' . '"]' => ['checked' => TRUE],
-                  ];
-                  $visible_content_types[] = $key;
-                  continue;
+                if (!in_array($item, $excluded_items) && strpos($field_settings['path'], $item) !== FALSE) {
+                  if (!in_array($key, $visible_content_types)) {
+                    $visible[] = [
+                      ':input[name="' . $this->getFormStatesElementName('type', $items, $delta, $element) . '[' . $key . ']' . '"]' => ['checked' => TRUE],
+                    ];
+                    $visible_content_types[] = $key;
+                    continue;
+                  }
                 }
               }
             }
@@ -732,12 +735,9 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
   }
 
   /**
-   * Get all entity reference fields.
-   *
-   * @return array
-   *   The reference fields.
+   * Get all excluded fields
    */
-  protected function getEntityReferenceFields() {
+  protected function getExcludedFields() {
     $excluded_fields = ['nid'];
     if (isset($this->settings['excluded_fields']) && !empty($this->settings['excluded_fields'])) {
       if (strpos($this->settings['excluded_fields'], ',') !== FALSE) {
@@ -747,7 +747,17 @@ class AutomatedListingConfigurationWidgetEnhanced extends StringTextareaWidget i
       }
     }
 
-    $reference_fields = $this->indexHelper->getIndexEntityReferenceFields($this->index, $excluded_fields);
+    return $excluded_fields;
+  }
+
+  /**
+   * Get all entity reference fields.
+   *
+   * @return array
+   *   The reference fields.
+   */
+  protected function getEntityReferenceFields() {
+    $reference_fields = $this->indexHelper->getIndexEntityReferenceFields($this->index, $this->getExcludedFields());
     $fields = [];
     $top_fields = ['field_topic', 'field_tags'];
     foreach ($top_fields as $field_id) {
