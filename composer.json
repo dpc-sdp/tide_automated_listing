@@ -4,9 +4,9 @@
   "type": "drupal-module",
   "license": "GPL-2.0+",
   "require": {
-    "dpc-sdp/tide_core": "^3.0.0",
-    "dpc-sdp/tide_api": "^3.0.0",
-    "dpc-sdp/tide_search": "^3.0.0"
+    "dpc-sdp/tide_core": "^4.0.0",
+    "dpc-sdp/tide_api": "^4.0.0",
+    "dpc-sdp/tide_search": "^4.0.0"
   },
   "suggest": {
     "dpc-sdp/tide_site:@dev": "Tide Site"
