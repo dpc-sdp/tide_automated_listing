@@ -2,11 +2,9 @@ name: Tide Automated Listing
 type: module
 description: 'Provides automated listing component for Tide Drupal 8 distribution.'
 package: Tide
-core_version_requirement: ^9 || ^10
+core_version_requirement: ^10 || ^11
 dependencies:
   - dpc-sdp:tide_core
-  - dpc-sdp:tide_api
-  - dpc-sdp:tide_search
 config_devel:
   install:
     - core.entity_form_display.paragraph.automated_card_listing.default
